@@ -1,6 +1,6 @@
 # trafic_system
 
-#Installation 
+##Installation   
 1. Cloner le projet  
 git clone https://github.com/TNyRina/trafic_system.git  
 
