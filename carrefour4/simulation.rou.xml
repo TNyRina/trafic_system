@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 2025-11-03 12:41:35 by Eclipse SUMO netedit Version 1.24.0
+-->
+
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
+    <!-- Vehicles, persons and containers (sorted by depart) -->
+    <personFlow id="pf_0" begin="0.00" end="3600.00" personsPerHour="3000">
+        <personTrip from="-E2" to="E2"/>
+    </personFlow>
+    <personFlow id="pf_1" begin="0.00" end="3600.00" personsPerHour="3000">
+        <personTrip from="-E0.49" to="E0"/>
+    </personFlow>
+    <personFlow id="pf_2" begin="0.00" end="3600.00" personsPerHour="3000">
+        <personTrip from="E2" to="-E2"/>
+    </personFlow>
+    <personFlow id="pf_3" begin="0.00" end="3600.00" personsPerHour="500">
+        <personTrip from="-E0" to="E0.46"/>
+    </personFlow>
+    <personFlow id="pf_4" begin="0.00" end="3600.00" personsPerHour="500">
+        <personTrip from="E0.46" to="-E0"/>
+    </personFlow>
+    <flow id="f_0" begin="0.00" end="3600.00" vehsPerHour="1800">
+        <route edges="-E0 -E0.49"/>
+    </flow>
+    <flow id="f_1" begin="0.00" end="3600.00" vehsPerHour="60">
+        <route edges="-E0 E2"/>
+    </flow>
+    <flow id="f_2" begin="0.00" end="3600.00" vehsPerHour="91">
+        <route edges="-E0 -E1"/>
+    </flow>
+    <flow id="f_3" begin="0.00" end="3600.00" vehsPerHour="100">
+        <route edges="E1 E2"/>
+    </flow>
+    <flow id="f_4" begin="0.00" end="3600.00" vehsPerHour="60">
+        <route edges="E1 -E0.49"/>
+    </flow>
+    <flow id="f_5" begin="0.00" end="3600.00" vehsPerHour="180">
+        <route edges="E1 E0.46"/>
+    </flow>
+    <flow id="f_6" begin="0.00" end="3600.00" vehsPerHour="180">
+        <route edges="E0 E0.46"/>
+    </flow>
+    <flow id="f_7" begin="0.00" end="3600.00" vehsPerHour="50">
+        <route edges="E0 E2"/>
+    </flow>
+    <flow id="f_8" begin="0.00" end="3600.00" vehsPerHour="40">
+        <route edges="E0 -E1"/>
+    </flow>
+    <flow id="f_9" begin="0.00" end="3600.00" vehsPerHour="40">
+        <route edges="-E2 -E1"/>
+    </flow>
+</routes>
