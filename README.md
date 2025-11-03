@@ -1,7 +1,7 @@
 # trafic_system
 
 ## Installation  
-1. Installer SUMO
+1. Installer SUMO   
 Aller sur le site officel de SUMO : https://eclipse.dev/sumo/
 3. Cloner le projet  
 - git clone https://github.com/TNyRina/trafic_system.git  
