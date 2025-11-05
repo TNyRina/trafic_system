@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Carrefour 4 voies</title>
+</head>
+<body>
+    <h1>État du carrefour</h1>
+
+    <h2>Feu tricolore</h2>
+    <p>État actuel : {{ traffic_light_state }}</p>
+
+    <h2>Edges entrants</h2>
+    <table border="1">
+        <tr>
+            <th>Edge</th>
+            <th>Longueur (m)</th>
+            <th>Vitesse max (m/s)</th>
+            <th>Véhicules</th>
+        </tr>
+        {% for edge, info in edges_info.items %}
+        <tr>
+            <td>{{ edge }}</td>
+            <td>{{ info.length }}</td>
+            <td>{{ info.max_speed }}</td>
+            <td>{{ info.num_vehicles }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <h2>Lanes entrantes</h2>
+    <table border="1">
+        <tr>
+            <th>Lane</th>
+            <th>Longueur (m)</th>
+            <th>Vitesse max (m/s)</th>
+            <th>Véhicules</th>
+            <th>Occupation (%)</th>
+            <th>Vitesse moyenne (m/s)</th>
+        </tr>
+        {% for lane, info in lanes_info.items %}
+        <tr>
+            <td>{{ lane }}</td>
+            <td>{{ info.length }}</td>
+            <td>{{ info.max_speed }}</td>
+            <td>{{ info.num_vehicles }}</td>
+            <td>{{ info.occupancy|floatformat:2 }}</td>
+            <td>{{ info.mean_speed|floatformat:2 }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

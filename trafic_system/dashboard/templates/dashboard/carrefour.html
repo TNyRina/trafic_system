@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Carrefour 4 voies</title>
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+</head>
+<body>
+    <h1>Carrefour 4 voies</h1>
+
+    <button id="startBtn">Démarrer la simulation</button>
+
+    <h2>Feu tricolore</h2>
+    <p id="trafficLight">...</p>
+
+    <h2>Edges entrants</h2>
+    <div id="edges"></div>
+
+    <h2>Lanes entrantes</h2>
+    <div id="lanes"></div>
+
+    <script>
+        // Bouton démarrage
+        $('#startBtn').click(function(){
+            $.get("{% url 'start_simulation' %}", function(data){
+                console.log(data);
+            });
+        });
+
+        // Rafraîchissement des données toutes les 1s
+        setInterval(function(){
+            $.get("{% url 'carrefour_data' %}", function(data){
+                // Feu
+                $('#trafficLight').text(data.traffic_light);
+
+                // Edges
+                let edgesHtml = '<table border="1"><tr><th>Edge</th><th>Véhicules</th></tr>';
+                for (let e in data.edges){
+                    edgesHtml += `<tr><td>${e}</td><td>${data.edges[e].num_vehicles}</td></tr>`;
+                }
+                edgesHtml += '</table>';
+                $('#edges').html(edgesHtml);
+
+                // Lanes
+                let lanesHtml = '<table border="1"><tr><th>Lane</th><th>Véhicules</th><th>Occupation (%)</th></tr>';
+                for (let l in data.lanes){
+                    lanesHtml += `<tr><td>${l}</td><td>${data.lanes[l].num_vehicles}</td><td>${(data.lanes[l].occupancy*100).toFixed(1)}</td></tr>`;
+                }
+                lanesHtml += '</table>';
+                $('#lanes').html(lanesHtml);
+            });
+        }, 1000);
+    </script>
+</body>
+</html>
