@@ -13,7 +13,7 @@ Aller sur le site officel de SUMO : https://eclipse.dev/sumo/
 4. Installer les dépendances  
 - pip install -r requirements.txt  
 
-## Tester si SUMO focntionne 
+## Tester si SUMO fonctionne 
 python test_sumo_terminal.py
 
 ## Ouvrir le dashboard (interface web)
