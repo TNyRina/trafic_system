@@ -13,5 +13,9 @@ Aller sur le site officel de SUMO : https://eclipse.dev/sumo/
 4. Installer les dépendances  
 - pip install -r requirements.txt  
 
-## Lancer le test de simulation
-python test_sumo.py
+## Tester si SUMO focntionne 
+python test_sumo_terminal.py
+
+## Ouvrir le dashboard (interface web)
+Aller dans le dossier 'trafic_system' qui contient le fichier manage.py, et lancer la commander $ python manage.py runserver  
+Ouvrir le lien http://127.0.0.1:8000/dashboard/
