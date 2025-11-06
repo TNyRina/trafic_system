@@ -1,3 +1,4 @@
+import json
 from django.shortcuts import render
 from django.http import JsonResponse
 from .models import Simulation
@@ -7,7 +8,8 @@ from django.conf import settings
 simulation = Simulation(settings.CONFIG_FILE_SIMULATION)
 
 def index(request):
-    return render(request, "dashboard/carrefour.html")
+    context = simulation.get_carrefour_static_data()
+    return JsonResponse(context)
 
 def start_simulation(request):
     simulation.start_simulation()

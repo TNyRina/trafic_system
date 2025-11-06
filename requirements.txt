@@ -1,5 +1,6 @@
 asgiref==3.10.0
 Django==5.2.7
+djangorestframework==3.16.1
 libsumo==1.24.0.post0
 libtraci==1.24.0.post0
 sqlparse==0.5.3

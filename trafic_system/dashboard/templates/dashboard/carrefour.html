@@ -1,54 +1,63 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Carrefour 4 voies</title>
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <title>Carrefour Simulation</title>
 </head>
 <body>
-    <h1>Carrefour 4 voies</h1>
+    <h1>Données du carrefour</h1>
+    
+    <button id="start-sim-btn">Démarrer la simulation</button>
 
-    <button id="startBtn">Démarrer la simulation</button>
+    <h2>Données statiques :</h2>
+    <pre id="static-data"></pre>
 
-    <h2>Feu tricolore</h2>
-    <p id="trafficLight">...</p>
-
-    <h2>Edges entrants</h2>
-    <div id="edges"></div>
-
-    <h2>Lanes entrantes</h2>
-    <div id="lanes"></div>
+    <h2>Données dynamiques :</h2>
+    <pre id="dynamic-data"></pre>
 
     <script>
-        // Bouton démarrage
-        $('#startBtn').click(function(){
-            $.get("{% url 'start_simulation' %}", function(data){
-                console.log(data);
-            });
-        });
+        // Fonction pour récupérer les données statiques
+        async function fetchStaticData() {
+            try {
+                const response = await fetch('/api/index/');
+                const data = await response.json();
+                document.getElementById('static-data').textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                console.error('Erreur:', error);
+            }
+        }
 
-        // Rafraîchissement des données toutes les 1s
-        setInterval(function(){
-            $.get("{% url 'carrefour_data' %}", function(data){
-                // Feu
-                $('#trafficLight').text(data.traffic_light);
+        // Fonction pour récupérer les données dynamiques
+        async function fetchDynamicData() {
+            try {
+                const response = await fetch('/api/carrefour_data/');
+                const data = await response.json();
+                document.getElementById('dynamic-data').textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                console.error('Erreur:', error);
+            }
+        }
 
-                // Edges
-                let edgesHtml = '<table border="1"><tr><th>Edge</th><th>Véhicules</th></tr>';
-                for (let e in data.edges){
-                    edgesHtml += `<tr><td>${e}</td><td>${data.edges[e].num_vehicles}</td></tr>`;
-                }
-                edgesHtml += '</table>';
-                $('#edges').html(edgesHtml);
+        // Fonction pour démarrer la simulation
+        async function startSimulation() {
+            try {
+                const response = await fetch('/api/start_simulation/', { method: 'POST' });
+                const result = await response.json();
+                alert('Simulation: ' + result.status);
+                // Optionnel : relancer la récupération des données dynamiques
+                fetchDynamicData();
+            } catch (error) {
+                console.error('Erreur:', error);
+            }
+        }
 
-                // Lanes
-                let lanesHtml = '<table border="1"><tr><th>Lane</th><th>Véhicules</th><th>Occupation (%)</th></tr>';
-                for (let l in data.lanes){
-                    lanesHtml += `<tr><td>${l}</td><td>${data.lanes[l].num_vehicles}</td><td>${(data.lanes[l].occupancy*100).toFixed(1)}</td></tr>`;
-                }
-                lanesHtml += '</table>';
-                $('#lanes').html(lanesHtml);
-            });
-        }, 1000);
+        // Ajouter un listener sur le bouton
+        document.getElementById('start-sim-btn').addEventListener('click', startSimulation);
+
+        // Charger les données statiques au chargement de la page
+        fetchStaticData();
+
+        // Optionnel : mettre à jour les données dynamiques toutes les secondes
+        setInterval(fetchDynamicData, 1000);
     </script>
 </body>
 </html>

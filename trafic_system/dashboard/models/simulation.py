@@ -25,9 +25,30 @@ class Simulation:
             pass
 
         self.running = True
-        threading.Thread(target=self._run_sumo).start()
+        threading.Thread(target=self._run_sumo_gui).start()
 
-    def _run_sumo(self):
+    def get_carrefour_static_data(self):
+        # Démarrer SUMO en mode non graphique (pour le serveur web)
+        traci.start(["sumo", "-c", self.sumo_cfg])
+        
+        # Créer l'objet Carrefour
+        carrefour = Carrefour()
+        
+        # Récupérer les informations
+        edges_info = {e: carrefour.get_edge_info(e) for e in carrefour.in_edges}
+        lanes_info = carrefour.get_incoming_lanes_info()
+        tl_state = carrefour.get_traffic_light_state()
+        
+        # Fermer la simulation SUMO
+        traci.close()
+
+        return {
+            "edges_info": edges_info,
+            "lanes_info": lanes_info,
+            "traffic_light_state": tl_state
+        }
+
+    def _run_sumo_gui(self):
         try:
             traci.start(["sumo-gui", "-c", self.sumo_cfg])
             self.carrefour = Carrefour()
@@ -49,10 +70,13 @@ class Simulation:
         self.running = False
 
     def get_carrefour_data(self):
-        if self.carrefour:
-            return {
-                "traffic_light": self.carrefour.get_traffic_light_state(),
-                "edges": {e: self.carrefour.get_edge_info(e) for e in self.carrefour.in_edges},
-                "lanes": self.carrefour.get_incoming_lanes_info()
-            }
-        return {}
+        if self.running:
+            if self.carrefour:
+                return {
+                    "traffic_light": self.carrefour.get_traffic_light_state(),
+                    "edges": {e: self.carrefour.get_edge_info(e) for e in self.carrefour.in_edges},
+                    "lanes": self.carrefour.get_incoming_lanes_info()
+                }
+        return {
+            "sumo": "inactive"
+        }

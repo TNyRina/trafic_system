@@ -16,6 +16,14 @@ Aller sur le site officel de SUMO : https://eclipse.dev/sumo/
 ## Tester si SUMO fonctionne 
 python test_sumo_terminal.py
 
-## Ouvrir le dashboard (interface web)
+## API
 Aller dans le dossier 'trafic_system' qui contient le fichier manage.py, et lancer la commander $ python manage.py runserver  
-Ouvrir le lien http://127.0.0.1:8000/dashboard/
+Ouvrir le lien http://127.0.0.1:8000/dashboard/ 
+
+|lien       | API
+|-----------|-----------------------
+|'/'        | dashboard static
+|'/start'   | demarer la simulation
+|'/data'    | dasboard dynamique (demarer la simulation avant de recuperer les informations dynamiques) 
+
+** Important ** : actualiser la page pour voir le changement des donnees dynamiques
