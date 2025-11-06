@@ -1,5 +1,63 @@
 <h2>Dashboard</h2>
 
-<button (click)="startSimulation()" class="btn btn-primary">
-    Démarrer la simulation
+<button (click)="startSimulation()">
+    🚦 Démarrer la simulation
 </button>
+
+<div>
+    <h3>Etat feu tricolor</h3>
+    <table>
+        <tr>
+            <td>code</td>
+            <td>{{ traffic_light.code }}</td>
+        </tr>
+        <tr>
+            <td>type</td>
+            <td>{{ traffic_light.type }}</td>
+        </tr>
+        <tr>
+            <td colspan="2">Interpretation</td>
+        </tr>
+        @for (item of traffic_light.detail | keyvalue; track item) {
+            <tr>
+                <td>{{ item.key }}</td>
+                <td>{{ item.value }}</td>
+            </tr>
+        }
+    </table>
+</div>
+
+<div>
+    <h3>Routes</h3>
+    <table>
+        <thead>
+            <td>ID voie</td>
+            <td>Longueur</td>
+            <td>Vitesse max</td>
+            <td>Nombre voiture</td>
+            <td>Occupation</td>
+            <td>Vitesse moyenne</td>
+        </thead>
+        <tbody>
+            @for (edge of edges; track edge.id) {
+                <tr>
+                    <td colspan="7" style="text-align: center;">{{ edge.id }}</td>
+                </tr>
+                @for (lane of lanes; track lane.id) {
+                    @if (lane.edgeId == edge.id) {
+                        <tr>
+                            <td>{{ lane.id }}</td>
+                            <td>{{ lane.length }}</td>
+                            <td>{{ lane.max_speed }}</td>
+                            <td>{{ lane.num_vehicles }}</td>
+                            <td>{{ lane.occupancy }}</td>
+                            <td>{{ lane.mean_speed }}</td>
+                        </tr>
+                    }
+                }
+            
+            }
+            
+        </tbody>
+    </table>
+</div>

@@ -1,16 +1,20 @@
 import { Component, OnDestroy } from '@angular/core';
 import { SimulationService } from '../../simulation-service';
 import { interval, Subscription } from 'rxjs';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [],
+  imports: [ CommonModule ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
 export class Dashboard implements OnDestroy {
   message = '';
   carrefour: any;
+  edges: any;
+  lanes: any;
+  traffic_light:any;
   private refreshInterval?: Subscription; 
 
   constructor(private simulationService: SimulationService) {}
@@ -23,7 +27,13 @@ export class Dashboard implements OnDestroy {
     this.simulationService.getStaticCarrefourData().subscribe({
       next: (data) => {
         this.carrefour = data;
+
+        this.edges = Object.values(data.edges_info); 
+        this.lanes = Object.values(data.lanes_info);
+        this.traffic_light = data.traffic_light_state;
+
         console.log('✅ Données statiques chargées :', data);
+        console.log('traffic light :', this.traffic_light);
       },
       error: (err) => this.handleError('Erreur lors du chargement des données', err),
     });
@@ -45,12 +55,20 @@ export class Dashboard implements OnDestroy {
   private startDynamicDataRefresh(): void {
     this.stopDynamicDataRefresh();
 
-    this.refreshInterval = interval(2000).subscribe(() => {
+    this.refreshInterval = interval(1000).subscribe(() => {
       this.simulationService.getDynamicCarrefourData().subscribe({
         next: (data) => {
-          this.carrefour = data;
-          console.log('♻️ Données dynamiques mises à jour :', data);
-          if(data.sumo == 'inactive') this.stopDynamicDataRefresh();
+            if(data.sumo == 'inactive') this.stopDynamicDataRefresh();
+            
+            this.carrefour = data;
+
+            this.edges = Object.values(data.edges_info); 
+            this.lanes = Object.values(data.lanes_info);
+            this.traffic_light = data.traffic_light_state;
+
+
+            console.log('♻️ Données dynamiques mises à jour :', data);
+          
         },
         error: (err) => this.handleError('Erreur lors de la mise à jour dynamique', err),
       });
@@ -76,5 +94,6 @@ export class Dashboard implements OnDestroy {
   ngOnDestroy(): void {
     this.stopDynamicDataRefresh();
   }
+  
 }
 
