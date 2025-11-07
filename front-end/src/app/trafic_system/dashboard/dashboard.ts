@@ -84,6 +84,17 @@ export class Dashboard implements OnDestroy {
     });
   }
 
+  prioritizeLaneByDirection(direction: string): void{
+    this.simulationService.prioritizeLaneByDirection(direction).subscribe({
+      next: (response) => {
+        this.updateMessage(`✅  ${direction} priorite !`);
+        console.log(response);
+      },
+      error: (err) => this.handleError(`❌ impossible de prioriser ${direction} `, err),
+    });
+  }
+
+
   private startDynamicDataRefresh(): void {
     this.stopDynamicDataRefresh();
 

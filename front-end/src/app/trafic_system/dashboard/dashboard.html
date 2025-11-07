@@ -12,6 +12,25 @@
     Restaurer le feu
 </button>
 
+<button (click)="prioritizeLaneByDirection('N')">
+    Prioriser la voie au Nord
+</button>
+<button (click)="prioritizeLaneByDirection('S')">
+    Prioriser la voie au Sud
+</button>
+<button (click)="prioritizeLaneByDirection('E')">
+    Prioriser la voie a l'Est
+</button>
+<button (click)="prioritizeLaneByDirection('W')">
+    Prioriser la voie a l'Ouest
+</button>
+<button (click)="prioritizeLaneByDirection('NS')">
+    Prioriser la voie Nord-Sud
+</button>
+<button (click)="prioritizeLaneByDirection('WE')">
+    Prioriser la voie Ouest-Est
+</button>
+
 <div>
     <h3>Etat feu tricolor</h3>
         <table>

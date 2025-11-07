@@ -21,6 +21,10 @@ export class SimulationService {
     return this.http.get(`${this.apiUrl}/traffic_light/prioritize/${index_lane}`);
   }
 
+  prioritizeLaneByDirection(direction: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/traffic_light/prioritize_direction/${direction}`);
+  }
+
   restoreTrafficLight(): Observable<any> {
     return this.http.get(`${this.apiUrl}/traffic_light/restore_controle`);
   }

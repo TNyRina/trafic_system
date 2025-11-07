@@ -30,8 +30,13 @@ def restore_controle_tl(request):
 def prioritize_lane(request, lane):
     if lane is None or lane == "":
         return JsonResponse({"error": "Paramètre 'lane' manquant"}, status=400)
-    # Appeler la fonction de simulation
     result = simulation.prioritize_lane(lane)
     
-    # Retourner le résultat en JSON
+    return JsonResponse(result)
+
+def prioritize_lane_by_direction(request, direction):
+    if direction is None or direction == "":
+        return JsonResponse({"error": "Paramètre 'direction' manquant"}, status=400)
+    result = simulation.prioritize_lane_by_direction(direction)
+    
     return JsonResponse(result)

@@ -271,3 +271,55 @@ class Carrefour:
         return sum(self.get_pedestrian_counts_by_lane().values())
 
     
+
+    def get_lane_indexes_by_direction(self, direction):
+        """
+        Retourne les index des lanes contrôlées par un feu pour une direction spécifique.
+        
+        :param tl_id: ID du feu de circulation
+        :param direction: Direction à filtrer ('N', 'S', 'E', 'W')
+        :return: Liste des indexes des lanes correspondantes dans controlledLanes
+        """
+        # Liste des lanes contrôlées par le feu
+        controlled_lanes = traci.trafficlight.getControlledLanes(self.tl_id)
+        
+        lane_indexes = []
+        print(direction)
+        for i, lane in enumerate(controlled_lanes):
+            # Déterminer la direction de la lane
+            print(i)
+            if lane.upper().startswith(direction):
+                lane_indexes.append(i)
+        
+        return lane_indexes
+
+    def prioritize_lane_by_direction(self, directions):
+        """
+        Priorise une ou plusieurs directions et bloque toutes les autres.
+        :param directions: chaîne de caractères représentant les directions à prioriser
+                        ex: "N", "S", "NS", "WE"
+        """
+        # Récupère les lanes contrôlées par le feu
+        controlled_lanes = traci.trafficlight.getControlledLanes(self.tl_id)
+
+        # Récupère tous les index à prioriser pour les directions demandées
+        priority_indexes = []
+        for dir_char in directions.upper():
+            priority_indexes.extend(self.get_lane_indexes_by_direction(dir_char))
+
+        # Crée le nouvel état du feu
+        new_state = []
+        for i, lane in enumerate(controlled_lanes):
+            if i in priority_indexes:
+                # Vert prioritaire pour la direction choisie
+                if 'ped' in lane.lower() or lane.startswith(':'):
+                    new_state.append('p')  # passage piéton autorisé si lane piétonne
+                else:
+                    new_state.append('G')  # vert prioritaire pour véhicules
+            else:
+                # Rouge pour toutes les autres lanes
+                new_state.append('r')
+        
+        # Applique l'état au feu
+        new_state_str = ''.join(new_state)
+        traci.trafficlight.setRedYellowGreenState(self.tl_id, new_state_str)
