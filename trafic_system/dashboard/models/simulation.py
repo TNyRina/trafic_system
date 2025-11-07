@@ -37,7 +37,7 @@ class Simulation:
         # Récupérer les informations
         edges_info = {e: carrefour.get_edge_info(e) for e in carrefour.edges}
         lanes_info = {e: carrefour.get_lane_info(e) for e in carrefour.lanes}
-        tl_state = carrefour.get_traffic_light_state()
+        tl_state = carrefour.get_traffic_light_info()
         pedestrian_lanes_info = carrefour.get_pedestrian_lanes_info()
         vehicles_per_lanes = carrefour.get_vehicle_counts_by_lane()
         
@@ -49,7 +49,7 @@ class Simulation:
             "lanes_info": lanes_info,
             "pedestrian_lanes_info": pedestrian_lanes_info,
             "vehicles_by_lanes": vehicles_per_lanes,
-            "traffic_light_state": tl_state,
+            "traffic_light_info": tl_state,
         }
 
     def _run_sumo_gui(self):
@@ -82,8 +82,27 @@ class Simulation:
                     "pedestrian_lanes_info": self.carrefour.get_pedestrian_lanes_info(),
                     "vehicles_by_lanes": self.carrefour.get_vehicle_counts_by_lane()
 ,
-                    "traffic_light_state": self.carrefour.get_traffic_light_state(),
+                    "traffic_light_info": self.carrefour.get_traffic_light_info(),
                 }
         return {
             "sumo": "inactive"
         }
+
+    
+    def stop_all_traffic_light(self):
+        new_state = ''.join(['r' if c in ['g', 'G', 'y'] else c for c in self.carrefour.get_traffic_light_state()])
+        
+        self.carrefour.set_traffic_light_state(new_state)
+
+        return {
+            "traffic_light_state": self.carrefour.get_traffic_light_info(),
+        }
+    
+    def restore_controle_tl(self):
+        self.carrefour.restore_tl_controle()
+        
+        return {
+            "traffic_light_state": self.carrefour.get_traffic_light_info(),
+        }
+
+        

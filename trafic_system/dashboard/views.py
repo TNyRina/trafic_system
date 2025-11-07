@@ -18,3 +18,11 @@ def start_simulation(request):
 def carrefour_data(request):
     data = simulation.get_carrefour_data()
     return JsonResponse(data)
+
+def stop_all_tl(request):
+    data = simulation.stop_all_traffic_light()
+    return JsonResponse(data)
+
+def restore_controle_tl(request):
+    data = simulation.restore_controle_tl()
+    return JsonResponse(data)

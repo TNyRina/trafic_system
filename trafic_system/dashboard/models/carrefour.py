@@ -86,11 +86,21 @@ class Carrefour:
     # Feux tricolores
     # ==========================
     def get_traffic_light_state(self):
+        return traci.trafficlight.getRedYellowGreenState(self.tl_id)
+    
+    def set_traffic_light_state(self, state):
+        traci.trafficlight.setRedYellowGreenState(self.tl_id, state)
+    
+    def restore_tl_controle(self):
+        traci.trafficlight.setProgram(self.tl_id, 0)
+    
+    def get_traffic_light_info(self):
         """
         État complet du feu principal avec infos dynamiques pour chaque lane.
         """
         logic = traci.trafficlight.getCompleteRedYellowGreenDefinition(self.tl_id)[0]
-        state_str = traci.trafficlight.getRedYellowGreenState(self.tl_id)
+
+        state_str = self.get_traffic_light_state()
         controlled_lanes = traci.trafficlight.getControlledLanes(self.tl_id)
 
         # Durée restante de la phase
@@ -123,13 +133,42 @@ class Carrefour:
                 "waiting_time": traci.lane.getWaitingTime(lane)
             }
 
+        # Phase duration
+        phases = logic.getPhases()
+        current_phase_index = traci.trafficlight.getPhase(self.tl_id)
+        current_phase = phases[current_phase_index]
+        phase_duration = current_phase.duration
+
+        # Phases info
+        logic_list = traci.trafficlight.getCompleteRedYellowGreenDefinition(self.tl_id)
+    
+        # Transformer les objets Logic en dictionnaires
+        logics_serialized = []
+        for logic in logic_list:
+            logics_serialized.append({
+                "programID": logic.programID,
+                "type": self._get_traffic_light_type_name(logic.type),
+                "currentPhaseIndex": logic.currentPhaseIndex,
+                "phases": [
+                    {
+                        "duration": phase.duration,
+                        "state": phase.state,
+                        "minDur": getattr(phase, "minDur", None),
+                        "maxDur": getattr(phase, "maxDur", None),
+                    }
+                    for phase in logic.phases
+                ]
+            })
+
         return {
             "tl_id": self.tl_id,
             "phase": traci.trafficlight.getPhase(self.tl_id),
+            "duration": phase_duration,
             "remaining_time": remaining_time,
             "code": state_str,
             "type": self._get_traffic_light_type_name(logic.type),
-            "lanes": lanes_info
+            "lanes": lanes_info,
+            "phases": logics_serialized
         }
 
 
@@ -167,3 +206,11 @@ class Carrefour:
             ped_lanes.extend(self.edge_lanes.get(edge, []))
         
         return {lane: traci.lane.getLastStepVehicleNumber(lane) for lane in ped_lanes}
+    
+    def get_total_vehicle_count(self):
+        return sum(self.get_vehicle_counts_by_lane().values())
+
+    def get_total_pedestrian_count(self):
+        return sum(self.get_pedestrian_counts_by_lane().values())
+
+    
