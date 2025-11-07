@@ -1,6 +1,6 @@
 import traci
 
-CONFIG_FILE = "carrefour4/simulation.sumocfg"
+CONFIG_FILE = "carrefour4_netgenerate/carrefour.sumocfg"
 
 # Démarre SUMO (mode non graphique)
 sumo_cmd = ["sumo", "-c", CONFIG_FILE]

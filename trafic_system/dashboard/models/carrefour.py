@@ -1,143 +1,104 @@
 import traci
 
-
 class Carrefour:
     """
-    Classe de gestion d’un carrefour SUMO (voitures + piétons + feux).
-    Fournit des méthodes pour analyser les edges, lanes et feux de circulation.
+    Classe Carrefour SUMO pour récupérer toutes les informations utiles
+    à la génération de traffic (voitures + piétons + feux).
     """
 
     def __init__(self, tl_id=None):
-        """
-        Initialise le carrefour et récupère les entités principales.
-        :param tl_id: ID du feu de circulation principal (si None, le premier est pris)
-        """
         self.tl_id = tl_id or traci.trafficlight.getIDList()[0]
-
-        # Récupération des edges
         self.edges = traci.edge.getIDList()
-        self.in_edges = [e for e in self.edges if e.startswith('-')]
-        self.out_edges = [e for e in self.edges if not e.startswith('-') and not e.startswith(':')]
-        self.internal_edges = [e for e in self.edges if e.startswith(':')]
-        self.ped_edges = [e for e in self.edges if 'ped' in e.lower() or e in self.internal_edges]
-
-        # Récupération des lanes et mappage edge → lanes
         self.lanes = traci.lane.getIDList()
-        self.edge_lanes = {
-            edge: [lane for lane in self.lanes if lane.startswith(edge)]
-            for edge in self.edges
-        }
 
-    # =========================================================
-    # ===     INFOS EDGES / LANES / PIÉTONS               ====
-    # =========================================================
+        # Séparation des edges
+        self.internal_edges = [e for e in self.edges if e.startswith(':')]
+        self.pedestrian_edges = [e for e in self.edges if '_w' in e.lower() or 'ped' in e.lower()]
+        self.in_edges = [e for e in self.edges if '2' in e and e not in self.internal_edges + self.pedestrian_edges]
+        self.out_edges = [e for e in self.edges if e not in self.internal_edges + self.pedestrian_edges + self.in_edges]
 
+        # Mappage edge -> lanes
+        self.edge_lanes = {edge: [lane for lane in self.lanes if lane.startswith(edge)] for edge in self.edges}
+
+    # ==========================
+    # Infos utiles pour la simulation
+    # ==========================
     def get_edge_info(self, edge_id):
         """
-        Retourne les informations d’un edge : longueur, vitesse, véhicules, etc.
+        Retourne les infos utiles d'un edge pour générer le traffic
         """
         lanes = self.edge_lanes.get(edge_id, [])
-        first_lane = lanes[0] if lanes else None
-
-        length = traci.lane.getLength(first_lane) if first_lane else 0
-        max_speed = traci.lane.getMaxSpeed(first_lane) if first_lane else 0
-
-        # Agrégation des véhicules sur toutes les lanes de l’edge
-        all_vehicles = []
-        for l in lanes:
-            all_vehicles.extend(traci.lane.getLastStepVehicleIDs(l))
-
         return {
             "id": edge_id,
-            "length": length,
-            "max_speed": max_speed,
-            "num_vehicles": len(all_vehicles),
-            "vehicles": all_vehicles,
-            "num_lanes": len(lanes)
+            "num_lanes": len(lanes),
+            "lane_ids": lanes,
+            "length": traci.lane.getLength(lanes[0]) if lanes else 0,
+            "max_speed": traci.lane.getMaxSpeed(lanes[0]) if lanes else 0
         }
 
     def get_lane_info(self, lane_id):
         """
-        Retourne les informations d’une lane : longueur, vitesse, occupation, etc.
+        Infos utiles pour générer le traffic sur la lane
         """
         return {
             "id": lane_id,
-            "edgeId": traci.lane.getEdgeID(lane_id),
+            "edge_id": traci.lane.getEdgeID(lane_id),
             "length": traci.lane.getLength(lane_id),
             "max_speed": traci.lane.getMaxSpeed(lane_id),
             "num_vehicles": traci.lane.getLastStepVehicleNumber(lane_id),
-            "vehicles": traci.lane.getLastStepVehicleIDs(lane_id),
+            "vehicle_ids": traci.lane.getLastStepVehicleIDs(lane_id),
             "occupancy": traci.lane.getLastStepOccupancy(lane_id),
             "mean_speed": traci.lane.getLastStepMeanSpeed(lane_id),
-            "shape": traci.lane.getShape(lane_id),
+            "waiting_time": traci.lane.getWaitingTime(lane_id)
         }
 
-    def get_incoming_lanes_info(self):
+    def get_vehicle_edges_info(self):
         """
-        Retourne les informations pour toutes les lanes entrantes.
+        Retourne les edges véhicules entrants et leurs infos pour traffic
         """
-        return {
-            lane: self.get_lane_info(lane)
-            for edge in self.in_edges
-            for lane in self.edge_lanes.get(edge, [])
-        }
+        return {e: self.get_edge_info(e) for e in self.in_edges}
+
+    def get_pedestrian_edges_info(self):
+        """
+        Retourne les edges piétons et leurs infos pour traffic
+        """
+        return {e: self.get_edge_info(e) for e in self.pedestrian_edges}
+
+    def get_vehicle_lanes_info(self):
+        """
+        Retourne toutes les lanes véhicules utiles pour traffic
+        """
+        lanes = []
+        for edge in self.in_edges + self.out_edges:
+            lanes.extend(self.edge_lanes.get(edge, []))
+        return {lane: self.get_lane_info(lane) for lane in lanes}
 
     def get_pedestrian_lanes_info(self):
         """
-        Retourne les informations pour les lanes piétonnes.
+        Retourne toutes les lanes piétons pour traffic
         """
-        info = {}
-        for edge in self.ped_edges:
-            for lane in self.edge_lanes.get(edge, []):
-                info[lane] = {
-                    "length": traci.lane.getLength(lane),
-                    "num_pedestrians": traci.lane.getLastStepVehicleNumber(lane),  # piétons = "vehicules"
-                    "pedestrian_ids": traci.lane.getLastStepVehicleIDs(lane),
-                    "occupancy": traci.lane.getLastStepOccupancy(lane)
-                }
-        return info
+        lanes = []
+        for edge in self.pedestrian_edges:
+            lanes.extend(self.edge_lanes.get(edge, []))
+        return {lane: self.get_lane_info(lane) for lane in lanes}
 
-    # =========================================================
-    # ===     COMPTAGES RAPIDES                             ====
-    # =========================================================
-
-    def count_vehicles_edges(self):
-        """Retourne le nombre de véhicules par edge entrant."""
-        return {e: traci.edge.getLastStepVehicleNumber(e) for e in self.in_edges}
-
-    def count_vehicles_lanes(self):
-        """Retourne le nombre de véhicules par lane entrante."""
-        return {
-            lane: traci.lane.getLastStepVehicleNumber(lane)
-            for edge in self.in_edges
-            for lane in self.edge_lanes.get(edge, [])
-        }
-
-    # =========================================================
-    # ===     FEUX DE CIRCULATION                           ====
-    # =========================================================
-
+    # ==========================
+    # Feux tricolores
+    # ==========================
     def get_traffic_light_state(self):
         """
-        Retourne l’état actuel du feu de circulation principal :
-        - code brut (rGy...)
-        - état détaillé
-        - type de feu (static, actuated, external, etc.)
+        État complet du feu principal avec infos dynamiques pour chaque lane.
         """
         logic = traci.trafficlight.getCompleteRedYellowGreenDefinition(self.tl_id)[0]
-        return {
-            "code": traci.trafficlight.getRedYellowGreenState(self.tl_id),
-            "detail": self.get_traffic_light_detailed_state(),
-            "type": self._get_traffic_light_type_name(logic.type)
-        }
-
-    def get_traffic_light_detailed_state(self):
-        """
-        Retourne l’état interprété du feu pour chaque lane contrôlée.
-        """
         state_str = traci.trafficlight.getRedYellowGreenState(self.tl_id)
         controlled_lanes = traci.trafficlight.getControlledLanes(self.tl_id)
 
+        # Durée restante de la phase
+        current_time = traci.simulation.getTime()
+        next_switch = traci.trafficlight.getNextSwitch(self.tl_id)
+        remaining_time = next_switch - current_time
+
+        # Signification des feux
         meanings = {
             "r": "Rouge (interdiction totale)",
             "y": "Jaune (transition)",
@@ -149,36 +110,30 @@ class Carrefour:
             "P": "Piétons : arrêt obligatoire",
         }
 
+        lanes_info = {}
+        for lane, sig in zip(controlled_lanes, state_str):
+            lanes_info[lane] = {
+                "id": lane,
+                "signal": sig,
+                "meaning": meanings.get(sig, f"Inconnu ({sig})"),
+                "num_vehicles": traci.lane.getLastStepVehicleNumber(lane),
+                "vehicle_ids": traci.lane.getLastStepVehicleIDs(lane),
+                "occupancy": traci.lane.getLastStepOccupancy(lane),
+                "mean_speed": traci.lane.getLastStepMeanSpeed(lane),
+                "waiting_time": traci.lane.getWaitingTime(lane)
+            }
+
         return {
-            lane: meanings.get(sig, f"Inconnu ({sig})")
-            for lane, sig in zip(controlled_lanes, state_str)
+            "tl_id": self.tl_id,
+            "phase": traci.trafficlight.getPhase(self.tl_id),
+            "remaining_time": remaining_time,
+            "code": state_str,
+            "type": self._get_traffic_light_type_name(logic.type),
+            "lanes": lanes_info
         }
 
-    def get_pedestrian_traffic_light_state(self):
-        """
-        Retourne l’état des feux piétons uniquement.
-        """
-        full_state = traci.trafficlight.getRedYellowGreenState(self.tl_id)
-        controlled_lanes = traci.trafficlight.getControlledLanes(self.tl_id)
-        return {
-            lane: sig for lane, sig in zip(controlled_lanes, full_state)
-            if 'ped' in lane.lower() or lane.startswith(':')
-        }
-
-    def set_traffic_light_state(self, state):
-        """
-        Modifie l’état du feu (exemple : 'GrGr' ou 'rGrG').
-        """
-        traci.trafficlight.setRedYellowGreenState(self.tl_id, state)
-
-    # =========================================================
-    # ===     MÉTHODES INTERNES / UTILITAIRES              ====
-    # =========================================================
 
     def _get_traffic_light_type_name(self, tl_type):
-        """
-        Traduit le code numérique du type de feu en texte lisible.
-        """
         type_map = {
             0: "static",
             1: "actuated",
@@ -189,3 +144,26 @@ class Carrefour:
             6: "rail_signal"
         }
         return type_map.get(tl_type, f"inconnu ({tl_type})")
+
+    # ==========================
+    # Comptages dynamiques
+    # ==========================
+    def get_vehicle_counts_by_lane(self):
+        """
+        Retourne le nombre de véhicules par lane pour les lanes véhicules
+        """
+        vehicle_lanes = []
+        for edge in self.in_edges + self.out_edges:
+            vehicle_lanes.extend(self.edge_lanes.get(edge, []))
+        
+        return {lane: traci.lane.getLastStepVehicleNumber(lane) for lane in vehicle_lanes}
+
+    def get_pedestrian_counts_by_lane(self):
+        """
+        Retourne le nombre de piétons par lane pour les lanes piétons
+        """
+        ped_lanes = []
+        for edge in self.pedestrian_edges:
+            ped_lanes.extend(self.edge_lanes.get(edge, []))
+        
+        return {lane: traci.lane.getLastStepVehicleNumber(lane) for lane in ped_lanes}

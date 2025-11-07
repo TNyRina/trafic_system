@@ -6,58 +6,44 @@
 
 <div>
     <h3>Etat feu tricolor</h3>
-    <table>
-        <tr>
-            <td>code</td>
-            <td>{{ traffic_light.code }}</td>
-        </tr>
-        <tr>
-            <td>type</td>
-            <td>{{ traffic_light.type }}</td>
-        </tr>
-        <tr>
-            <td colspan="2">Interpretation</td>
-        </tr>
-        @for (item of traffic_light.detail | keyvalue; track item) {
+        <table>
             <tr>
-                <td>{{ item.key }}</td>
-                <td>{{ item.value }}</td>
+                <th>ID</th>
+                <td>{{ traffic_light.tl_id }}</td>
             </tr>
-        }
-    </table>
-</div>
-
-<div>
-    <h3>Routes</h3>
-    <table>
-        <thead>
-            <td>ID voie</td>
-            <td>Longueur</td>
-            <td>Vitesse max</td>
-            <td>Nombre voiture</td>
-            <td>Occupation</td>
-            <td>Vitesse moyenne</td>
-        </thead>
-        <tbody>
-            @for (edge of edges; track edge.id) {
-                <tr>
-                    <td colspan="7" style="text-align: center;">{{ edge.id }}</td>
-                </tr>
-                @for (lane of lanes; track lane.id) {
-                    @if (lane.edgeId == edge.id) {
-                        <tr>
-                            <td>{{ lane.id }}</td>
-                            <td>{{ lane.length }}</td>
-                            <td>{{ lane.max_speed }}</td>
-                            <td>{{ lane.num_vehicles }}</td>
-                            <td>{{ lane.occupancy }}</td>
-                            <td>{{ lane.mean_speed }}</td>
-                        </tr>
-                    }
-                }
-            
+            <tr>
+                <th>code</th>
+                <td>{{ traffic_light.code }}</td>
+            </tr>
+            <tr>
+                <th>type</th>
+                <td>{{ traffic_light.type }}</td>
+            </tr>
+            <tr>
+                <th>Phase</th>
+                <td>{{ traffic_light.phase }}</td>
+            </tr>
+            <tr>
+                <th>Temps restant avant le prochaine changement</th>
+                <td>{{ traffic_light.remaining_time }}</td>
+            </tr>
+            <tr>
+                <th>lane (voie)</th>
+                <th>Signal</th>
+                <th>Nombre de voitures</th>
+                <th>Occupation</th>
+                <th>Vitesse moyenne</th>
+                <th>Temps d'attente</th>
+            </tr>
+            @for (lane of tl_lanes; track lane.id) {
+              <tr>
+                <th>{{ lane.id }}</th>
+                <td>[{{ lane.signal }}] - {{ lane.meaning }} </td>
+                <td>{{ lane.num_vehicles }}</td>
+                <td>{{ lane.occupancy }}</td>
+                <td>{{ lane.mean_speed }}</td>
+                <td>{{ lane.waiting_time }}</td>
+              </tr>
             }
-            
-        </tbody>
-    </table>
+        </table>
 </div>

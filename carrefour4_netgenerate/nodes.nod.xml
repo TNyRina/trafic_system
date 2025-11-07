@@ -1,0 +1,10 @@
+<nodes>
+    <!-- Extrémités des routes -->
+    <node id="N" x="0" y="50" type="priority"/>
+    <node id="S" x="0" y="-50" type="priority"/>
+    <node id="E" x="50" y="0" type="priority"/>
+    <node id="W" x="-50" y="0" type="priority"/>
+    
+    <!-- Centre du carrefour avec feu tricolore -->
+    <node id="C" x="0" y="0" type="traffic_light"/>
+</nodes>

@@ -123,7 +123,7 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CONFIG_FILE_SIMULATION = "../carrefour4/simulation.sumocfg"
+CONFIG_FILE_SIMULATION = "../carrefour4_netgenerate/carrefour.sumocfg"
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:4200",

@@ -1,0 +1,13 @@
+<additional>
+    <!-- Passage piéton Nord-Sud (face au feu tricolore) -->
+    <crossing id="cross_NS" edges="N2C C2S" type="traffic_light"/>
+
+    <!-- Passage piéton Sud-Nord -->
+    <crossing id="cross_SN" edges="S2C C2N" type="traffic_light"/>
+
+    <!-- Passage piéton Est-Ouest -->
+    <crossing id="cross_EW" edges="E2C C2W" type="traffic_light"/>
+
+    <!-- Passage piéton Ouest-Est -->
+    <crossing id="cross_WE" edges="W2C C2E" type="traffic_light"/>
+</additional>

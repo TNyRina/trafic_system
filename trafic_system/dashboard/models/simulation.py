@@ -35,13 +35,11 @@ class Simulation:
         carrefour = Carrefour()
         
         # Récupérer les informations
-        edges_info = {e: carrefour.get_edge_info(e) for e in carrefour.in_edges}
-        lanes_info = carrefour.get_incoming_lanes_info()
+        edges_info = {e: carrefour.get_edge_info(e) for e in carrefour.edges}
+        lanes_info = {e: carrefour.get_lane_info(e) for e in carrefour.lanes}
         tl_state = carrefour.get_traffic_light_state()
-        ptl_state = carrefour.get_pedestrian_traffic_light_state()
         pedestrian_lanes_info = carrefour.get_pedestrian_lanes_info()
-        vehicles_per_edges = carrefour.count_vehicles_edges()
-        vehicles_per_lanes = carrefour.count_vehicles_lanes()
+        vehicles_per_lanes = carrefour.get_vehicle_counts_by_lane()
         
         # Fermer la simulation SUMO
         traci.close()
@@ -50,10 +48,8 @@ class Simulation:
             "edges_info": edges_info,
             "lanes_info": lanes_info,
             "pedestrian_lanes_info": pedestrian_lanes_info,
-            "vehicles_per_edges": vehicles_per_edges,
-            "vehicles_per_lanes": vehicles_per_lanes,
+            "vehicles_by_lanes": vehicles_per_lanes,
             "traffic_light_state": tl_state,
-            "pedestrian_traffic_state": ptl_state
         }
 
     def _run_sumo_gui(self):
@@ -81,13 +77,12 @@ class Simulation:
         if self.running:
             if self.carrefour:
                 return {
-                    "edges_info": {e: self.carrefour.get_edge_info(e) for e in self.carrefour.in_edges},
-                    "lanes_info": self.carrefour.get_incoming_lanes_info(),
+                    "edges_info": {e: self.carrefour.get_edge_info(e) for e in self.carrefour.edges},
+                    "lanes_info": {e: self.carrefour.get_lane_info(e) for e in self.carrefour.lanes},
                     "pedestrian_lanes_info": self.carrefour.get_pedestrian_lanes_info(),
-                    "vehicles_per_edges": self.carrefour.count_vehicles_edges(),
-                    "vehicles_per_lanes": self.carrefour.count_vehicles_lanes(),
+                    "vehicles_by_lanes": self.carrefour.get_vehicle_counts_by_lane()
+,
                     "traffic_light_state": self.carrefour.get_traffic_light_state(),
-                    "pedestrian_traffic_state": self.carrefour.get_pedestrian_traffic_light_state()
                 }
         return {
             "sumo": "inactive"
