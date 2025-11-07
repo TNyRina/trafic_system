@@ -105,4 +105,10 @@ class Simulation:
             "traffic_light_state": self.carrefour.get_traffic_light_info(),
         }
 
+    def prioritize_lane(self, lane_index):
+        self.carrefour.prioritize_lane(lane_index)
+
+        return {
+            "traffic_light_state": self.carrefour.get_traffic_light_info(),
+        }
         

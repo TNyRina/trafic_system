@@ -26,3 +26,12 @@ def stop_all_tl(request):
 def restore_controle_tl(request):
     data = simulation.restore_controle_tl()
     return JsonResponse(data)
+
+def prioritize_lane(request, lane):
+    if lane is None or lane == "":
+        return JsonResponse({"error": "Paramètre 'lane' manquant"}, status=400)
+    # Appeler la fonction de simulation
+    result = simulation.prioritize_lane(lane)
+    
+    # Retourner le résultat en JSON
+    return JsonResponse(result)

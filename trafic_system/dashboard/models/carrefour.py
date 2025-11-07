@@ -93,6 +93,30 @@ class Carrefour:
     
     def restore_tl_controle(self):
         traci.trafficlight.setProgram(self.tl_id, 0)
+
+    def prioritize_lane(self, lane_index):
+        controlled_lanes = traci.trafficlight.getControlledLanes(self.tl_id)
+    
+        state = list(traci.trafficlight.getRedYellowGreenState(self.tl_id))
+        
+        # Vérifier la taille
+        if lane_index < 0 or lane_index >= len(state):
+            print(f"Erreur : lane_index {lane_index} hors limite ({len(state)})")
+            return {"error": "lane_index hors limite"}
+        
+        new_state = []
+        for i in range(len(state)):
+            if i == lane_index:
+                new_state.append("G")  # vert pour lane prioritaire
+            else:
+                # Vérifier si c'est un passage piéton
+                if controlled_lanes[i].startswith(":"):
+                    new_state.append("r")  # ou "p" selon SUMO
+                else:
+                    new_state.append("r")  # rouge pour les autres lanes
+
+        traci.trafficlight.setRedYellowGreenState(self.tl_id, "".join(new_state))
+        
     
     def get_traffic_light_info(self):
         """
@@ -121,9 +145,42 @@ class Carrefour:
         }
 
         lanes_info = {}
-        for lane, sig in zip(controlled_lanes, state_str):
+        for i,(lane, sig) in enumerate(zip(controlled_lanes, state_str)):
+            lname = lane.lower()
+            direction = "inconnue"
+            type_voie = "vehicule"
+
+            # --- Détection du type ---
+            if "_w" in lname or "ped" in lname:
+                type_voie = "pieton"
+
+            # --- Détection direction selon le nom ---
+            if "n2" in lname or lname.startswith("n_"):
+                direction = "nord"
+            elif "s2" in lname or lname.startswith("s_"):
+                direction = "sud"
+            elif "e2" in lname or lname.startswith("e_"):
+                direction = "est"
+            elif "w2" in lname or lname.startswith("w_"):
+                direction = "ouest"
+
+            # --- Détection direction spéciale pour piétons (traversée) ---
+            if type_voie == "pieton":
+                if "n_w" in lname or "n2s" in lname or "n2s_w" in lname:
+                    direction = "nord_sud"
+                elif "s_w" in lname or "s2n" in lname or "s2n_w" in lname:
+                    direction = "sud_nord"
+                elif "e_w" in lname or "e2w" in lname or "e2w_w" in lname:
+                    direction = "est_ouest"
+                elif "w_e" in lname or "w2e" in lname or "w2e_w" in lname:
+                    direction = "ouest_est"
+                
+            
             lanes_info[lane] = {
+                "index": i,
                 "id": lane,
+                "type": type_voie,
+                "direction": direction,
                 "signal": sig,
                 "meaning": meanings.get(sig, f"Inconnu ({sig})"),
                 "num_vehicles": traci.lane.getLastStepVehicleNumber(lane),
