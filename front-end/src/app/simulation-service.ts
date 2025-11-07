@@ -13,6 +13,18 @@ export class SimulationService {
     return this.http.get(`${this.apiUrl}/start`);
   }
 
+  stopTrafficLight(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/traffic_light/stop_all`);
+  }
+
+  prioritizeLane(index_lane: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/traffic_light/prioritize/${index_lane}`);
+  }
+
+  restoreTrafficLight(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/traffic_light/restore_controle`);
+  }
+
   getStaticCarrefourData(): Observable<any> {
     return this.http.get(`${this.apiUrl}/`);
   }

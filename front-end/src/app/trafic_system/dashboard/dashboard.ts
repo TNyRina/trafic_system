@@ -34,11 +34,8 @@ export class Dashboard implements OnDestroy {
 
         console.log('✅ Données statiques chargées :', data);
         
-        this.traffic_light = data.traffic_light_state;
-        this.edges = Object.values(data.edges_info); 
-        this.lanes = Object.values(data.lanes_info);
-        this.tl_lanes = Object.values(data.traffic_light_state.lanes);
-        this.pedestrians = Object.values(data.pedestrian_lanes_info);
+        this.traffic_light = data.traffic_light_info;
+        this.tl_lanes = Object.values(data.traffic_light_info.lanes);
       },
       error: (err) => this.handleError('Erreur lors du chargement des données', err),
     });
@@ -57,6 +54,36 @@ export class Dashboard implements OnDestroy {
     });
   }
 
+  stopTL(): void{
+    this.simulationService.stopTrafficLight().subscribe({
+      next: (response) => {
+        this.updateMessage('✅ Toutes les voies sont stopees !');
+        console.log(response);
+      },
+      error: (err) => this.handleError('❌ impossible de stoper toutes les voies', err),
+    });
+  }
+
+  restoreTL(): void{
+    this.simulationService.restoreTrafficLight().subscribe({
+      next: (response) => {
+        this.updateMessage('✅ TL restaure !');
+        console.log(response);
+      },
+      error: (err) => this.handleError('❌ impossible de restaurer TL', err),
+    });
+  }
+
+  prioritizeLane(index: number): void{
+    this.simulationService.prioritizeLane(index).subscribe({
+      next: (response) => {
+        this.updateMessage(`✅  ${index} priorite !`);
+        console.log(response);
+      },
+      error: (err) => this.handleError(`❌ impossible de prioriser ${index} `, err),
+    });
+  }
+
   private startDynamicDataRefresh(): void {
     this.stopDynamicDataRefresh();
 
@@ -70,11 +97,8 @@ export class Dashboard implements OnDestroy {
 
             console.log('♻️ Données dynamiques mises à jour :', data);
 
-            this.traffic_light = data.traffic_light_state;
-            this.edges = Object.values(data.edges_info); 
-            this.lanes = Object.values(data.lanes_info);
-            this.tl_lanes = Object.values(data.traffic_light_state.lanes);
-            this.pedestrians = Object.values(data.pedestrian_lanes_info);
+            this.traffic_light = data.traffic_light_info;
+            this.tl_lanes = Object.values(data.traffic_light_info.lanes);
         },
         error: (err) => this.handleError('Erreur lors de la mise à jour dynamique', err),
       });

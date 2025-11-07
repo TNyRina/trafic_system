@@ -4,6 +4,14 @@
     🚦 Démarrer la simulation
 </button>
 
+<button (click)="stopTL()">
+    Arreter touts
+</button>
+
+<button (click)="restoreTL()">
+    Restaurer le feu
+</button>
+
 <div>
     <h3>Etat feu tricolor</h3>
         <table>
@@ -38,6 +46,7 @@
                 <th>Occupation</th>
                 <th>Vitesse moyenne</th>
                 <th>Temps d'attente</th>
+                <th>Prioriser</th>
             </tr>
             @for (lane of tl_lanes; track lane.id) {
               <tr>
@@ -47,6 +56,7 @@
                 <td>{{ lane.occupancy }}</td>
                 <td>{{ lane.mean_speed }}</td>
                 <td>{{ lane.waiting_time }}</td>
+                <td><button (click)=prioritizeLane(lane.index)>Prioriser</button></td>
               </tr>
             }
         </table>
