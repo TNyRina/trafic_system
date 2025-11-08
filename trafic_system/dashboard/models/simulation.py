@@ -37,7 +37,7 @@ class Simulation:
         # Récupérer les informations
         edges_info = {e: carrefour.get_edge_info(e) for e in carrefour.edges}
         lanes_info = {e: carrefour.get_lane_info(e) for e in carrefour.lanes}
-        tl_state = carrefour.get_traffic_light_info()
+        tl_state = carrefour.TL.get_info()
         pedestrian_lanes_info = carrefour.get_pedestrian_lanes_info()
         vehicles_per_lanes = carrefour.get_vehicle_counts_by_lane()
         
@@ -82,7 +82,7 @@ class Simulation:
                     "pedestrian_lanes_info": self.carrefour.get_pedestrian_lanes_info(),
                     "vehicles_by_lanes": self.carrefour.get_vehicle_counts_by_lane()
 ,
-                    "traffic_light_info": self.carrefour.get_traffic_light_info(),
+                    "traffic_light_info": self.carrefour.TL.get_info(),
                 }
         return {
             "sumo": "inactive"
@@ -90,32 +90,32 @@ class Simulation:
 
     
     def stop_all_traffic_light(self):
-        new_state = ''.join(['r' if c in ['g', 'G', 'y'] else c for c in self.carrefour.get_traffic_light_state()])
+        new_state = ''.join(['r' if c in ['g', 'G', 'y'] else c for c in self.carrefour.TL.get_state()])
         
-        self.carrefour.set_traffic_light_state(new_state)
+        self.carrefour.TL.set_state(new_state)
 
         return {
-            "traffic_light_state": self.carrefour.get_traffic_light_info(),
+            "traffic_light_state": self.carrefour.TL.get_state(),
         }
     
     def restore_controle_tl(self):
-        self.carrefour.restore_tl_controle()
+        self.carrefour.TL.restore_controle()
         
         return {
-            "traffic_light_state": self.carrefour.get_traffic_light_info(),
+            "traffic_light_state": self.carrefour.TL.get_state(),
         }
 
     def prioritize_lane(self, lane_index):
-        self.carrefour.prioritize_lane(lane_index)
+        self.carrefour.TL.prioritize_lane(lane_index)
 
         return {
-            "traffic_light_state": self.carrefour.get_traffic_light_info(),
+            "traffic_light_state": self.carrefour.TL.get_state(),
         }
     
     def prioritize_lane_by_direction(self, direction):
-        self.carrefour.prioritize_lane_by_direction(direction)
+        self.carrefour.TL.prioritize_lane_by_direction(direction)
 
         return {
-            "traffic_light_state": self.carrefour.get_traffic_light_info(),
+            "traffic_light_state": self.carrefour.TL.get_state(),
         }
         
