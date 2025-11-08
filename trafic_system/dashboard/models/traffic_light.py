@@ -96,7 +96,8 @@ class TrafficLight :
             "phase": self._phase,
             "duration": current_phase.duration,
             "remaining_time": remaining_time,
-            "code": self.get_state(),
+            "state": self.get_state(),
+            "state_by_direction": self._get_signals_by_direction(),
             "type": self._get_type_name(self._logic.type),
             "lanes": self._get_lanes_info(),
             "phases": self._logics_serialized()
@@ -104,8 +105,67 @@ class TrafficLight :
 
 
 
+    #==================================
+    # Phases
+    #===================================
+
+    def set_phase_duration(self, phase_index: int, new_duration: float):
+        """
+        Change la durée d'une phase spécifique d'un feu de circulation.
+
+        :param tlsID: identifiant du feu de circulation
+        :param phase_index: index de la phase à modifier (0-based)
+        :param new_duration: nouvelle durée en secondes
+        """
+        
 
 
+
+
+
+
+
+
+    def _get_signals_by_direction(self):
+        """
+        Regroupe les signaux d’un feu tricolore par direction (N, S, E, W, pedestrians).
+        :param tl_id: ID du feu de circulation
+        :return: dict regroupant les états des feux par direction
+        """
+        state = self.get_state()
+        controlled_lanes = self._controlled_lanes
+
+        vehicle_directions = {"N": [], "S": [], "E": [], "W": []}
+        pedestrian_signals = []
+
+        for lane, signal in zip(controlled_lanes, state):
+            lane_lower = lane.lower()
+            if "ped" in lane_lower or lane.startswith(":"):
+                pedestrian_signals.append(signal)
+            elif "n" in lane_lower:
+                vehicle_directions["N"].append(signal)
+            elif "s" in lane_lower:
+                vehicle_directions["S"].append(signal)
+            elif "e" in lane_lower:
+                vehicle_directions["E"].append(signal)
+            elif "w" in lane_lower:
+                vehicle_directions["W"].append(signal)
+
+        aggregated_signals = {dir: self._aggregate(sigs) for dir, sigs in vehicle_directions.items()}
+
+        return {
+            "vehicles": aggregated_signals,
+            "pedestrians": pedestrian_signals
+        }
+
+
+    def _aggregate(self, sig_list):
+        if any(s.lower() == 'g' for s in sig_list):
+            return 'g'
+        elif any(s.lower() == 'y' for s in sig_list):
+            return 'y'
+        else:
+            return 'r'
 
 
 
@@ -161,25 +221,65 @@ class TrafficLight :
     
 
     def _logics_serialized(self):
+        """
+        Sérialise les logics du feu avec les phases et le signal par direction.
+        Retourne un dictionnaire JSON-friendly.
+        """
         logics = traci.trafficlight.getCompleteRedYellowGreenDefinition(self._id)
+        controlled_lanes = traci.trafficlight.getControlledLanes(self._id)
 
         logics_serialized = []
+
         for logic in logics:
-            logics_serialized.append({
+            logic_dict = {
                 "programID": logic.programID,
                 "type": self._get_type_name(logic.type),
                 "currentPhaseIndex": logic.currentPhaseIndex,
-                "phases": [
-                    {
-                        "duration": phase.duration,
-                        "state": phase.state,
-                        "minDur": getattr(phase, "minDur", None),
-                        "maxDur": getattr(phase, "maxDur", None),
-                    }
-                    for phase in logic.phases
-                ]
-            })
-        
+                "phases": []
+            }
+
+            for phase in logic.phases:
+                # Calcul des signaux par direction pour les véhicules
+                vehicle_directions = {"N": [], "S": [], "E": [], "W": []}
+                pedestrian_lanes = {}
+
+                for lane, sig in zip(controlled_lanes, phase.state):
+                    lane_lower = lane.lower()
+                    if "ped" in lane_lower or lane.startswith(":"):
+                        pedestrian_lanes[lane] = sig
+                    elif "n" in lane_lower:
+                        vehicle_directions["N"].append(sig)
+                    elif "s" in lane_lower:
+                        vehicle_directions["S"].append(sig)
+                    elif "e" in lane_lower:
+                        vehicle_directions["E"].append(sig)
+                    elif "w" in lane_lower:
+                        vehicle_directions["W"].append(sig)
+
+                # Déterminer le signal global par direction pour les véhicules
+                global_signals = {}
+                for dir, signals in vehicle_directions.items():
+                    if all(s in ["g", "G"] for s in signals) and signals:
+                        global_signals[dir] = "g"
+                    elif all(s == "r" for s in signals) and signals:
+                        global_signals[dir] = "r"
+                    elif any(s == "y" for s in signals):
+                        global_signals[dir] = "y"
+                    else:
+                        global_signals[dir] = "r"  # mélange ou vide → considérer rouge
+
+                # Ajouter la phase avec signaux par direction et piétons
+                logic_dict["phases"].append({
+                    "duration": phase.duration,
+                    "state": phase.state,
+                    "minDur": getattr(phase, "minDur", None),
+                    "maxDur": getattr(phase, "maxDur", None),
+                    "vehicle_signals": global_signals,
+                    "pedestrian_signals": pedestrian_lanes
+                })
+
+            logics_serialized.append(logic_dict)
+
         return logics_serialized
 
     def _get_lanes_info(self):

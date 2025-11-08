@@ -1,0 +1,4 @@
+<additional>
+    <vType id="bus" vClass="bus" color="0,0,1" accel="1.5" decel="3.0" length="12.0" minGap="3.0" maxSpeed="11.1"/>
+    <vType id="truck" vClass="truck" color="0,1,0" accel="1.2" decel="3.0" length="10.0" minGap="3.0" maxSpeed="11.1"/>
+</additional>

@@ -40,3 +40,13 @@ def prioritize_lane_by_direction(request, direction):
     result = simulation.prioritize_lane_by_direction(direction)
     
     return JsonResponse(result)
+
+def change_phase_duration(request, phase_index, duration):
+    result = simulation.change_phase_duration(phase_index, duration)
+
+    return JsonResponse(result)
+
+def create_vehicle(request, vehicleID, routeID):
+    result = simulation.create_vehicle(vehicleID, routeID)
+
+    return JsonResponse(result)

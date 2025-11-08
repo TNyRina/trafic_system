@@ -8,6 +8,7 @@
     <input>
         <net-file value="carrefour_final.net.xml"/>
         <route-files value="carrefour.rou.xml"/>
+        <additional-files value="vehicle_types.type.xml"/>
     </input>
 
     <time>

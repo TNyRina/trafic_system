@@ -16,8 +16,11 @@ class Carrefour:
         # Séparation des edges
         self.internal_edges = [e for e in self.edges if e.startswith(':')]
         self.pedestrian_edges = [e for e in self.edges if '_w' in e.lower() or 'ped' in e.lower()]
-        self.in_edges = [e for e in self.edges if '2' in e and e not in self.internal_edges + self.pedestrian_edges]
-        self.out_edges = [e for e in self.edges if e not in self.internal_edges + self.pedestrian_edges + self.in_edges]
+        self.in_edges = [e for e in self.edges
+                        if ('2C' in e or '_toC' in e) and e not in self.internal_edges + self.pedestrian_edges]
+        self.out_edges = [e for e in self.edges
+                        if e not in self.internal_edges + self.pedestrian_edges + self.in_edges]
+
 
         # Mappage edge -> lanes
         self.edge_lanes = {edge: [lane for lane in self.lanes if lane.startswith(edge)] for edge in self.edges}

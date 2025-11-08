@@ -2,6 +2,7 @@ import traci
 import threading
 import time
 from .carrefour import Carrefour
+from .vehicle import Vehicle
 
 class Simulation:
     def __init__(self, sumo_cfg):
@@ -35,7 +36,12 @@ class Simulation:
         carrefour = Carrefour()
         
         # Récupérer les informations
-        edges_info = {e: carrefour.get_edge_info(e) for e in carrefour.edges}
+        edges_info = {
+            "incomming" : {e: carrefour.get_edge_info(e) for e in carrefour.in_edges},
+            "pedestrian" : {e: carrefour.get_edge_info(e) for e in carrefour.pedestrian_edges},
+            "outgoing" : {e: carrefour.get_edge_info(e) for e in carrefour.out_edges},
+            "internal" : {e: carrefour.get_edge_info(e) for e in carrefour.internal_edges}
+            }
         lanes_info = {e: carrefour.get_lane_info(e) for e in carrefour.lanes}
         tl_state = carrefour.TL.get_info()
         pedestrian_lanes_info = carrefour.get_pedestrian_lanes_info()
@@ -94,28 +100,41 @@ class Simulation:
         
         self.carrefour.TL.set_state(new_state)
 
-        return {
-            "traffic_light_state": self.carrefour.TL.get_state(),
-        }
+        return self.get_carrefour_data()
     
     def restore_controle_tl(self):
         self.carrefour.TL.restore_controle()
         
-        return {
-            "traffic_light_state": self.carrefour.TL.get_state(),
-        }
+        return self.get_carrefour_data()
 
     def prioritize_lane(self, lane_index):
         self.carrefour.TL.prioritize_lane(lane_index)
 
-        return {
-            "traffic_light_state": self.carrefour.TL.get_state(),
-        }
+        return self.get_carrefour_data()
     
     def prioritize_lane_by_direction(self, direction):
         self.carrefour.TL.prioritize_lane_by_direction(direction)
 
-        return {
-            "traffic_light_state": self.carrefour.TL.get_state(),
-        }
+        return self.get_carrefour_data()
+    
+
+
+    def change_phase_duration(self, index, duration):
+        traci.start(["sumo", "-c", self.sumo_cfg])
         
+        carrefour = Carrefour()
+        
+        carrefour.TL.set_phase_duration(index, duration)
+        
+        traci.close()
+
+
+        return self.get_carrefour_static_data()
+    
+    def create_vehicle(self, vehID, routeID):
+        vehicle = Vehicle(vehID, routeID)
+        vehicle.create_vehicle()
+
+        return {
+            "total_vehicle" : self.carrefour.get_total_vehicle_count()
+        }
