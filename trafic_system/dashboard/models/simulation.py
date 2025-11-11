@@ -120,16 +120,9 @@ class Simulation:
 
 
     def change_phase_duration(self, index, duration):
-        traci.start(["sumo", "-c", self.sumo_cfg])
-        
-        carrefour = Carrefour()
-        
-        carrefour.TL.set_phase_duration(index, duration)
-        
-        traci.close()
+        self.carrefour.TL.set_phase_duration(index, duration)
 
-
-        return self.get_carrefour_static_data()
+        return self.get_carrefour_data()
     
     def create_vehicle(self, vehID, routeID):
         vehicle = Vehicle(vehID, routeID)

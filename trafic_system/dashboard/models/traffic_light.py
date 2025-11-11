@@ -5,7 +5,9 @@ class TrafficLight :
         self._id = traci.trafficlight.getIDList()[0]
         
         self._controlled_lanes = traci.trafficlight.getControlledLanes(self._id)
-        self._logic = traci.trafficlight.getCompleteRedYellowGreenDefinition(self._id)[0]
+        # normaliser la récupération du premier logic (accepte tuple ou objet)
+        logics = traci.trafficlight.getCompleteRedYellowGreenDefinition(self._id)
+        self._logic = logics[0] if logics else None
         self._phase = traci.trafficlight.getPhase(self._id)
 
         self._meanings_singal = {
@@ -109,18 +111,51 @@ class TrafficLight :
     # Phases
     #===================================
 
-    def set_phase_duration(self, phase_index: int, new_duration: float):
+    def set_phase_duration(self, index_phase: int, new_duration: float):
         """
         Change la durée d'une phase spécifique d'un feu de circulation.
 
-        :param tlsID: identifiant du feu de circulation
         :param phase_index: index de la phase à modifier (0-based)
         :param new_duration: nouvelle durée en secondes
         """
-        
 
+        try:
 
+            # Récupération du programme complet du feu
+            logics = traci.trafficlight.getCompleteRedYellowGreenDefinition(self._id)
+            logic = logics[0]
 
+            # Vérifie si l'index est valide
+            if index_phase >= len(logic.phases):
+                print(f"❌ Index {index_phase} invalide (max {len(logic.phases)-1})")
+                traci.close()
+                return
+
+            # Copie des phases et modification
+            phases = list(logic.phases)
+            phase_modifiee = phases[index_phase]
+            phases[index_phase] = traci.trafficlight.Phase(
+                duration=new_duration,
+                state=phase_modifiee.state,
+                minDur=getattr(phase_modifiee, "minDur", 0),
+                maxDur=getattr(phase_modifiee, "maxDur", 0)
+            )
+
+            # Création de la nouvelle logique avec la phase modifiée
+            new_logic = traci.trafficlight.Logic(
+                logic.programID, logic.type, logic.currentPhaseIndex, phases
+            )
+
+            # Application et rechargement du programme
+            traci.trafficlight.setCompleteRedYellowGreenDefinition(self._id, new_logic)
+            traci.trafficlight.setProgram(self._id, new_logic.programID)
+
+        except traci.exceptions.TraCIException as e:
+            print("Erreur TraCI :", e)
+            return False
+        except Exception as e:
+            print("Erreur :", e)
+            return False
 
 
 
@@ -223,7 +258,7 @@ class TrafficLight :
     def _logics_serialized(self):
         """
         Sérialise les logics du feu avec les phases et le signal par direction.
-        Retourne un dictionnaire JSON-friendly.
+        Supporte les objets traci *et* les tuples (compatibilité versions).
         """
         logics = traci.trafficlight.getCompleteRedYellowGreenDefinition(self._id)
         controlled_lanes = traci.trafficlight.getControlledLanes(self._id)
@@ -231,19 +266,45 @@ class TrafficLight :
         logics_serialized = []
 
         for logic in logics:
+            # normaliser fields (objet ou tuple)
+            if hasattr(logic, "programID"):
+                programID = logic.programID
+                tl_type = logic.type
+                currentPhaseIndex = getattr(logic, "currentPhaseIndex", None)
+                phases = logic.phases
+            else:
+                # tuple-like: (programID, type, currentPhaseIndex, phases)
+                programID = logic[0] if len(logic) > 0 else None
+                tl_type = logic[1] if len(logic) > 1 else None
+                currentPhaseIndex = logic[2] if len(logic) > 2 else None
+                phases = logic[3] if len(logic) > 3 else []
+
             logic_dict = {
-                "programID": logic.programID,
-                "type": self._get_type_name(logic.type),
-                "currentPhaseIndex": logic.currentPhaseIndex,
+                "programID": programID,
+                "type": self._get_type_name(tl_type),
+                "currentPhaseIndex": currentPhaseIndex,
                 "phases": []
             }
 
-            for phase in logic.phases:
-                # Calcul des signaux par direction pour les véhicules
+            for phase in phases:
+                # normaliser phase (objet ou tuple)
+                if hasattr(phase, "duration"):
+                    duration = phase.duration
+                    state = phase.state
+                    minDur = getattr(phase, "minDur", None)
+                    maxDur = getattr(phase, "maxDur", None)
+                else:
+                    # tuple-like: (duration, state, minDur, maxDur, ...)
+                    duration = phase[0] if len(phase) > 0 else None
+                    state = phase[1] if len(phase) > 1 else ""
+                    minDur = phase[2] if len(phase) > 2 else None
+                    maxDur = phase[3] if len(phase) > 3 else None
+
+                # Calcul des signaux par direction
                 vehicle_directions = {"N": [], "S": [], "E": [], "W": []}
                 pedestrian_lanes = {}
 
-                for lane, sig in zip(controlled_lanes, phase.state):
+                for lane, sig in zip(controlled_lanes, state):
                     lane_lower = lane.lower()
                     if "ped" in lane_lower or lane.startswith(":"):
                         pedestrian_lanes[lane] = sig
@@ -256,24 +317,22 @@ class TrafficLight :
                     elif "w" in lane_lower:
                         vehicle_directions["W"].append(sig)
 
-                # Déterminer le signal global par direction pour les véhicules
                 global_signals = {}
-                for dir, signals in vehicle_directions.items():
-                    if all(s in ["g", "G"] for s in signals) and signals:
-                        global_signals[dir] = "g"
-                    elif all(s == "r" for s in signals) and signals:
-                        global_signals[dir] = "r"
+                for dirc, signals in vehicle_directions.items():
+                    if signals and all(s in ["g", "G"] for s in signals):
+                        global_signals[dirc] = "g"
+                    elif signals and all(s == "r" for s in signals):
+                        global_signals[dirc] = "r"
                     elif any(s == "y" for s in signals):
-                        global_signals[dir] = "y"
+                        global_signals[dirc] = "y"
                     else:
-                        global_signals[dir] = "r"  # mélange ou vide → considérer rouge
+                        global_signals[dirc] = "r"
 
-                # Ajouter la phase avec signaux par direction et piétons
                 logic_dict["phases"].append({
-                    "duration": phase.duration,
-                    "state": phase.state,
-                    "minDur": getattr(phase, "minDur", None),
-                    "maxDur": getattr(phase, "maxDur", None),
+                    "duration": duration,
+                    "state": state,
+                    "minDur": minDur,
+                    "maxDur": maxDur,
                     "vehicle_signals": global_signals,
                     "pedestrian_signals": pedestrian_lanes
                 })
