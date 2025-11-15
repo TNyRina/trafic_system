@@ -1,19 +1,32 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
-<!-- generated on 2025-11-07 09:01:02 by Eclipse SUMO netedit Version 1.24.0
--->
-
 <routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
     <!-- VTypes -->
     <vType id="car" length="5.00" minGap="2.50" maxSpeed="13.90" vClass="passenger" color="red" accel="2.6" decel="4.5"/>
+
     <!-- Routes -->
     <route id="E2W" edges="E2C C2W"/>
+    <route id="E2N" edges="E2C C2N"/>
+    <route id="E2S" edges="E2C C2S"/>
     <route id="N2S" edges="N2C C2S"/>
+    <route id="N2E" edges="N2C C2E"/>
+    <route id="N2W" edges="N2C C2W"/>
     <route id="S2N" edges="S2C C2N"/>
+    <route id="S2E" edges="S2C C2E"/>
+    <route id="S2W" edges="S2C C2W"/>
     <route id="W2E" edges="W2C C2E"/>
-    <!-- Vehicles, persons and containers (sorted by depart) -->
-    <vehicle id="veh1" type="car" depart="0.00" route="N2S"/>
-    <vehicle id="veh2" type="car" depart="5.00" route="S2N"/>
-    <vehicle id="veh3" type="car" depart="10.00" route="E2W"/>
-    <vehicle id="veh4" type="car" depart="15.00" route="W2E"/>
+    <route id="W2N" edges="W2C C2N"/>
+    <route id="W2S" edges="W2C C2S"/>
+
+    <!-- Flows de véhicules -->
+    <flow id="flow_N2S" type="car" begin="0" end="600" number="40" route="N2S"/>
+    <flow id="flow_N2E" type="car" begin="0" end="600" number="50" route="N2E"/>
+    <flow id="flow_N2W" type="car" begin="0" end="600" number="60" route="N2W"/>
+    <flow id="flow_S2N" type="car" begin="0" end="600" number="55" route="S2N"/>
+    <flow id="flow_S2E" type="car" begin="0" end="600" number="34" route="S2E"/>
+    <flow id="flow_S2W" type="car" begin="0" end="600" number="53" route="S2W"/>
+    <flow id="flow_E2W" type="car" begin="0" end="600" number="25" route="E2W"/>
+    <flow id="flow_E2N" type="car" begin="0" end="600" number="60" route="E2N"/>
+    <flow id="flow_E2S" type="car" begin="0" end="600" number="55" route="E2S"/>
+    <flow id="flow_W2E" type="car" begin="0" end="600" number="40" route="W2E"/>
+    <flow id="flow_W2N" type="car" begin="0" end="600" number="36" route="W2N"/>
+    <flow id="flow_W2S" type="car" begin="0" end="600" number="50" route="W2S"/>
 </routes>
