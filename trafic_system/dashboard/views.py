@@ -46,6 +46,22 @@ def change_phase_duration(request, phase_index, duration):
 
     return JsonResponse(result)
 
+def change_phase_duration_by_group_yellow(request,  duration):
+    result = simulation.change_phase_duration_by_group_yellow(duration)
+
+    return JsonResponse(result)
+
+def change_phase_duration_by_group_green_main(request,  duration):
+    result = simulation.change_phase_duration_by_group_green_main(duration)
+
+    return JsonResponse(result)
+
+
+def change_phase_duration_by_group_green_short(request,  duration):
+    result = simulation.change_phase_duration_by_group_green_short(duration)
+
+    return JsonResponse(result)
+
 def create_vehicle(request, vehicleID, routeID):
     result = simulation.create_vehicle(vehicleID, routeID)
 

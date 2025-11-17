@@ -33,4 +33,19 @@ urlpatterns = [
         views.create_vehicle,
         name='create_vehicle'
     ),
+
+    path('traffic_light/change_phase/yellow/<int:duration>/',
+        views.change_phase_duration_by_group_yellow,
+        name='change_phase_duration'
+    ),
+
+    path('traffic_light/change_phase/green_main/<int:duration>/',
+        views.change_phase_duration_by_group_green_main,
+        name='change_phase_duration'
+    ),
+
+    path('traffic_light/change_phase/green_short/<int:duration>/',
+        views.change_phase_duration_by_group_green_short,
+        name='change_phase_duration'
+    ),
 ]

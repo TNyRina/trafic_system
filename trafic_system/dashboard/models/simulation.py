@@ -123,6 +123,23 @@ class Simulation:
         self.carrefour.TL.set_phase_duration(index, duration)
 
         return self.get_carrefour_data()
+
+
+    def change_phase_duration_by_group_yellow(self, new_duration):
+        self.carrefour.TL.phase.set_phase_duration_by_group_yellow(new_duration)
+
+        return self.get_carrefour_data()
+    
+
+    def change_phase_duration_by_group_green_main(self, new_duration):
+        self.carrefour.TL.phase.set_phase_duration_by_group_green_main(new_duration)
+
+        return self.get_carrefour_data()
+
+    def change_phase_duration_by_group_green_short(self, new_duration):
+        self.carrefour.TL.phase.set_phase_duration_by_group_green_short(new_duration)
+
+        return self.get_carrefour_data()
     
     def create_vehicle(self, vehID, routeID):
         vehicle = Vehicle(vehID, routeID)
