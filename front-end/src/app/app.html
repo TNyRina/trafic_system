@@ -1,4 +1,576 @@
-<h1>Trafic system</h1>
-<div>
-    <app-dashboard></app-dashboard>
+<div class="min-h-screen bg-gray-900 text-gray-100 font-sans">
+  <div class="p-6 bg-gray-900 min-h-screen font-sans text-gray-100">
+    <!-- HEADER AMÉLIORÉ -->
+    <header
+      class="flex items-center justify-between mb-8 p-4 bg-gray-800 rounded-2xl border border-gray-700"
+    >
+      <div class="flex items-center gap-4">
+        <div class="text-3xl">🚦</div>
+        <div>
+          <h1 class="text-2xl font-bold text-indigo-400">
+            Système de Contrôle de Circulation à quatre chemins
+          </h1>
+          <div class="flex items-center gap-4 text-sm text-gray-400 mt-1">
+            <span
+              >Mode : <span class="font-medium text-indigo-300">{{ mode | uppercase }}</span></span
+            >
+            <span>•</span>
+            <span
+              >Phase : <span class="font-medium text-green-300">{{ getCurrentPhase() }}</span></span
+            >
+            <span>•</span>
+            <span
+              >Temps restant :
+              <span class="font-medium text-yellow-300">{{ getRemainingTime() }}s</span></span
+            >
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <select
+          [(ngModel)]="mode"
+          (change)="toggleMode(mode)"
+          class="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-gray-200 focus:ring-2 focus:ring-indigo-500"
+        >
+          <option *ngFor="let m of modes" [value]="m">{{ m | titlecase }}</option>
+        </select>
+
+        <button
+          (click)="startSimulation()"
+          [disabled]="isLoading"
+          class="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white shadow transition disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <span *ngIf="!isLoading">▶️ Démarrer</span>
+          <span *ngIf="isLoading">⏳ Chargement...</span>
+        </button>
+
+        <button
+          (click)="stopSimulation()"
+          [disabled]="!simulationRunning"
+          class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white shadow transition disabled:opacity-50"
+        >
+          ⏹️ Arrêter
+        </button>
+
+        <button
+          (click)="restoreControl()"
+          class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow transition"
+        >
+          🔄 Restaurer
+        </button>
+      </div>
+    </header>
+
+    <!-- MESSAGE D'ÉTAT AVEC BOUTON FERMETURE (Option 2) -->
+    <div
+      *ngIf="message"
+      class="mb-6 p-4 rounded-lg bg-blue-900 border border-blue-700 text-blue-200 flex items-start gap-3"
+    >
+      <div class="flex-shrink-0 text-lg">ℹ️</div>
+      <div class="flex-1">{{ message }}</div>
+      <button
+        (click)="clearMessage()"
+        class="flex-shrink-0 text-blue-300 hover:text-white transition text-lg"
+        title="Fermer"
+      >
+        ✕
+      </button>
+    </div>
+
+    <div class="grid lg:grid-cols-4 gap-6">
+      <!-- COLONNE GAUCHE : VISUALISATION CARREFOUR -->
+      <section class="lg:col-span-2 space-y-6">
+        <!-- VUE SCHÉMATIQUE DU CARREFOUR -->
+        <!-- Remplacer l'affichage des feux pour utiliser les données SUMO -->
+        <!-- VUE SIMPLIFIÉE DU CARREFOUR -->
+        <!-- VUE SIMPLIFIÉE DU CARREFOUR - 4 POINTS CARDINAUX -->
+        <div class="flex flex-col items-center justify-center space-y-8">
+          <!-- NORD -->
+          <div class="text-center p-6 bg-gray-800 rounded-xl border border-gray-700 w-40">
+            <div class="text-lg font-semibold text-gray-300 mb-3">NORD</div>
+
+            <!-- FEU PRINCIPAL -->
+            <div class="flex justify-center mb-3">
+              <div
+                class="w-12 h-12 rounded-full border-2 border-gray-800 transition-all duration-300"
+                [class]="getLightColor('NORD')"
+              ></div>
+            </div>
+
+            <!-- FEUX FLÉCHÉS -->
+            <div class="flex justify-center space-x-2">
+              <div
+                class="w-8 h-8 rounded border border-gray-600 flex items-center justify-center text-sm"
+                [class]="getArrowColor('NORD', 'straight')"
+              >
+                ↓
+              </div>
+              <div
+                class="w-8 h-8 rounded border border-gray-600 flex items-center justify-center text-sm"
+                [class]="getArrowColor('NORD', 'right')"
+              >
+                ←
+              </div>
+            </div>
+          </div>
+
+          <!-- CENTRE : EST + OUEST -->
+          <div class="flex items-center justify-between w-80">
+            <!-- OUEST -->
+            <div class="text-center p-6 bg-gray-800 rounded-xl border border-gray-700 w-40">
+              <div class="text-lg font-semibold text-gray-300 mb-3">OUEST</div>
+
+              <div class="flex justify-center mb-3">
+                <div
+                  class="w-12 h-12 rounded-full border-2 border-gray-800 transition-all duration-300"
+                  [class]="getLightColor('OUEST')"
+                ></div>
+              </div>
+
+              <div class="flex justify-center space-x-2">
+                <div
+                  class="w-8 h-8 rounded border border-gray-600 flex items-center justify-center text-sm"
+                  [class]="getArrowColor('OUEST', 'straight')"
+                >
+                  →
+                </div>
+                <div
+                  class="w-8 h-8 rounded border border-gray-600 flex items-center justify-center text-sm"
+                  [class]="getArrowColor('OUEST', 'right')"
+                >
+                  ↓
+                </div>
+              </div>
+            </div>
+
+            <!-- ESPACE CENTRAL -->
+            <div
+              class="w-16 h-16 bg-gray-700 border-2 border-gray-600 rounded-lg transform rotate-45"
+            ></div>
+
+            <!-- EST -->
+            <div class="text-center p-6 bg-gray-800 rounded-xl border border-gray-700 w-40">
+              <div class="text-lg font-semibold text-gray-300 mb-3">EST</div>
+
+              <div class="flex justify-center mb-3">
+                <div
+                  class="w-12 h-12 rounded-full border-2 border-gray-800 transition-all duration-300"
+                  [class]="getLightColor('EST')"
+                ></div>
+              </div>
+
+              <div class="flex justify-center space-x-2">
+                <div
+                  class="w-8 h-8 rounded border border-gray-600 flex items-center justify-center text-sm"
+                  [class]="getArrowColor('EST', 'straight')"
+                >
+                  ←
+                </div>
+                <div
+                  class="w-8 h-8 rounded border border-gray-600 flex items-center justify-center text-sm"
+                  [class]="getArrowColor('EST', 'right')"
+                >
+                  ↑
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SUD -->
+          <div class="text-center p-6 bg-gray-800 rounded-xl border border-gray-700 w-40">
+            <div class="text-lg font-semibold text-gray-300 mb-3">SUD</div>
+
+            <div class="flex justify-center mb-3">
+              <div
+                class="w-12 h-12 rounded-full border-2 border-gray-800 transition-all duration-300"
+                [class]="getLightColor('SUD')"
+              ></div>
+            </div>
+
+            <div class="flex justify-center space-x-2">
+              <div
+                class="w-8 h-8 rounded border border-gray-600 flex items-center justify-center text-sm"
+                [class]="getArrowColor('SUD', 'straight')"
+              >
+                ↑
+              </div>
+              <div
+                class="w-8 h-8 rounded border border-gray-600 flex items-center justify-center text-sm"
+                [class]="getArrowColor('SUD', 'right')"
+              >
+                →
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ajouter un bouton debug pour vérifier la synchronisation -->
+        <div class="mt-4 text-center space-x-2">
+          <button
+            (click)="debugSumoState()"
+            class="px-3 py-1 text-xs bg-purple-600 hover:bg-purple-700 text-white rounded"
+          >
+            🐛 Debug SUMO
+          </button>
+          <!-- BOUTON DEBUG DANS LE HEADER -->
+          <button
+            (click)="debugLaneIndexes()"
+            class="px-3 py-2 text-xs bg-purple-600 hover:bg-purple-700 text-white rounded"
+          >
+            🐛 Debug Index
+          </button>
+          <button
+            (click)="checkAllPedestrianSync()"
+            class="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded"
+          >
+            🔍 Check Sync
+          </button>
+        </div>
+
+        <!-- CONTRÔLES MANUELS (Conditionnel) -->
+        <!-- CONTRÔLE MANUEL SIMPLIFIÉ -->
+        <div
+          class="bg-gray-800 p-6 rounded-2xl shadow border border-gray-700 mt-8"
+          *ngIf="mode === 'manual'"
+        >
+          <h2 class="text-xl font-semibold text-indigo-300 mb-4 flex items-center gap-2">
+            <span>🎮</span> Contrôle Manuel
+          </h2>
+
+          <!-- COMMANDES GLOBALES -->
+          <div class="flex flex-wrap gap-3 mb-6 justify-center">
+            <button
+              (click)="setNSGreen()"
+              class="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white transition"
+            >
+              🟢 NORD-SUD
+            </button>
+
+            <button
+              (click)="setEWGreen()"
+              class="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white transition"
+            >
+              🟢 EST-OUEST
+            </button>
+
+            <button
+              (click)="setAllRed()"
+              class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition"
+            >
+              🔴 Tout Rouge
+            </button>
+          </div>
+
+          <!-- CONTRÔLE FLÈCHES PAR DIRECTION -->
+          <div class="grid grid-cols-2 gap-4">
+            <div
+              *ngFor="let dir of directions"
+              class="flex flex-col items-center p-4 border border-gray-600 rounded-lg bg-gray-700"
+            >
+              <div class="font-medium text-gray-200 mb-3">{{ dir }}</div>
+
+              <!-- BOUTONS FLÈCHES -->
+              <div class="flex gap-2">
+                <button
+                  (click)="setStraightArrow(dir)"
+                  class="px-4 py-2 rounded bg-green-600 hover:bg-green-700 text-white transition"
+                >
+                  ↑ Tout droit
+                </button>
+
+                <!-- BOUTON DROITE -->
+                <button
+                  (click)="setRightArrow(dir)"
+                  class="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white transition"
+                >
+                  → Droite
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- COLONNE DROITE : INFORMATIONS ET CONTRÔLES -->
+      <aside class="lg:col-span-2 space-y-6">
+        <!-- STATISTIQUES TEMPS RÉEL -->
+        <div class="bg-gray-800 p-6 rounded-2xl shadow border border-gray-700">
+          <h3 class="font-semibold text-indigo-300 mb-4 flex items-center gap-2">
+            <span>📊</span> Statistiques Temps Réel
+          </h3>
+          <div class="grid grid-cols-2 gap-4">
+            <div class="text-center p-3 bg-gray-700 rounded-lg border border-gray-600">
+              <div class="text-2xl font-bold text-green-400">{{ stats.totalVehicles }}</div>
+              <div class="text-sm text-gray-400">Véhicules</div>
+            </div>
+            <div class="text-center p-3 bg-gray-700 rounded-lg border border-gray-600">
+              <div class="text-2xl font-bold text-blue-400">{{ stats.totalPedestrians }}</div>
+              <div class="text-sm text-gray-400">Piétons</div>
+            </div>
+            <div class="text-center p-3 bg-gray-700 rounded-lg border border-gray-600">
+              <div class="text-2xl font-bold text-yellow-400">
+                {{ stats.averageSpeed.toFixed(1) }}
+              </div>
+              <div class="text-sm text-gray-400">Vitesse moy. (m/s)</div>
+            </div>
+            <div class="text-center p-3 bg-gray-700 rounded-lg border border-gray-600">
+              <div class="text-2xl font-bold text-orange-400">
+                {{ getActiveLanes() }}/{{ getTotalLanes() }}
+              </div>
+              <div class="text-sm text-gray-400">Voies actives</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CONFIGURATION DES DURÉES -->
+        <!-- Section Configuration des Durées de Phase -->
+        <div class="bg-gray-800 p-6 rounded-2xl shadow border border-gray-700 mb-8">
+          <h3 class="font-semibold text-indigo-300 mb-4 flex items-center gap-2">
+            <span>⏱️</span> Configuration des Durées de Phase
+          </h3>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Phase Jaune -->
+            <div class="space-y-3">
+              <label class="text-sm text-gray-400 block mb-2">🟡 Durée Phase Jaune</label>
+              <div class="flex space-x-2">
+                <input
+                  type="number"
+                  [(ngModel)]="yellowDuration"
+                  min="1"
+                  max="10"
+                  class="w-24 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-white text-center font-semibold"
+                  placeholder="5"
+                />
+                <button
+                  (click)="updateYellowDuration()"
+                  [disabled]="isLoading"
+                  class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+                >
+                  Appliquer
+                </button>
+              </div>
+            </div>
+
+            <!-- Vert Principal -->
+            <div class="space-y-3">
+              <label class="text-sm text-gray-400 block mb-2">🟢 Durée Vert Principal</label>
+              <div class="flex space-x-2">
+                <input
+                  type="number"
+                  [(ngModel)]="greenMainDuration"
+                  min="5"
+                  max="60"
+                  class="w-24 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-white text-center font-semibold"
+                  placeholder="30"
+                />
+                <button
+                  (click)="updateGreenMainDuration()"
+                  [disabled]="isLoading"
+                  class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+                >
+                  Appliquer
+                </button>
+              </div>
+            </div>
+
+            <!-- Vert Court -->
+            <div class="space-y-3">
+              <label class="text-sm text-gray-400 block mb-2">🟢 Durée Vert Court</label>
+              <div class="flex space-x-2">
+                <input
+                  type="number"
+                  [(ngModel)]="greenShortDuration"
+                  min="3"
+                  max="30"
+                  class="w-24 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-green-400 focus:border-green-400 text-white text-center font-semibold"
+                  placeholder="15"
+                />
+                <button
+                  (click)="updateGreenShortDuration()"
+                  [disabled]="isLoading"
+                  class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+                >
+                  Appliquer
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION PASSAGES PIÉTONS -->
+        <div class="bg-gray-800 p-6 rounded-2xl shadow border border-gray-700 mt-6">
+          <h2 class="text-xl font-semibold text-indigo-300 mb-6 flex items-center gap-2">
+            <span>🚶‍♂️</span> Passages Piétons
+          </h2>
+
+          <!-- ÉTAT DES FEUX PIÉTONS -->
+          <div class="mb-8">
+            <h3 class="text-lg font-semibold text-gray-300 mb-4">État des Feux</h3>
+            <div class="grid grid-cols-4 gap-4">
+              <div
+                *ngFor="let dir of directions"
+                class="text-center p-4 bg-gray-700 rounded-lg border border-gray-600"
+              >
+                <div class="text-sm text-gray-400 mb-2">{{ dir }}</div>
+
+                <!-- FEU PIÉTON -->
+                <div class="flex justify-center mb-2">
+                  <div
+                    class="w-12 h-12 rounded-full border-2 border-gray-800 transition-all duration-300"
+                    [class]="getPedestrianLightColor(dir)"
+                  ></div>
+                </div>
+
+                <div
+                  class="text-lg font-semibold mb-1"
+                  [class]="
+                    getPedestrianLightState(dir) === 'green' ? 'text-green-400' : 'text-red-400'
+                  "
+                >
+                  {{ getPedestrianLightState(dir).toUpperCase() }}
+                </div>
+
+                <!-- INFO INDEX -->
+                <div class="text-xs text-gray-500 space-y-1">
+                  <div>Index: {{ getPedestrianIndex(dir) }}</div>
+                  <div *ngIf="getPedestrianLaneInfo(dir) as laneInfo" class="text-gray-400 text-xs">
+                    Signal: {{ laneInfo.signal }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- COMMANDES INDIVIDUELLES -->
+          <div class="mb-8">
+            <h3 class="text-lg font-semibold text-gray-300 mb-4">Contrôle par Direction</h3>
+            <div class="grid grid-cols-2 gap-4">
+              <div
+                *ngFor="let dir of directions"
+                class="flex flex-col items-center p-4 border border-gray-600 rounded-lg bg-gray-700"
+              >
+                <div class="font-medium text-gray-200 mb-3">Piétons {{ dir }}</div>
+
+                <button
+                  (click)="prioritizePedestrianDirection(dir)"
+                  class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition text-lg w-full"
+                >
+                  🟢 Activer
+                </button>
+
+                <div class="text-xs text-gray-400 mt-2">Index: {{ getPedestrianIndex(dir) }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- COMMANDES GLOBALES -->
+          <!-- <div>
+            <h3 class="text-lg font-semibold text-gray-300 mb-4">Commandes Globales</h3>
+            <div class="flex flex-wrap gap-3 justify-center">
+              <button
+                (click)="activateAllPedestrians()"
+                class="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white transition"
+              >
+                🟢 Tout vert piétons
+              </button>
+
+              <button
+                (click)="stopAllPedestrians()"
+                class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition"
+              >
+                🔴 Tout rouge piétons
+              </button>
+
+              <button
+                (click)="prioritizePedestrianCrossing('NS')"
+                class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition"
+              >
+                🚶‍♂️ Piétons NORD-SUD
+              </button>
+
+              <button
+                (click)="prioritizePedestrianCrossing('WE')"
+                class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition"
+              >
+                🚶‍♂️ Piétons EST-OUEST
+              </button>
+            </div>
+          </div> -->
+        </div>
+
+        <!-- GESTION DES ENTITÉS -->
+
+        <div class="bg-gray-800 p-6 rounded-2xl shadow border border-gray-700">
+          <h3 class="font-semibold text-indigo-300 mb-4 flex items-center gap-2">
+            <span>👥</span> Gestion des Entités
+          </h3>
+
+          <!-- FORMULAIRE AJOUT -->
+          <div class="flex gap-3 mb-4">
+            <select
+              [(ngModel)]="newEntity.type"
+              class="flex-1 bg-gray-700 border border-gray-600 rounded px-3 py-2 text-gray-200"
+            >
+              <option value="vehicule">🚗 Véhicule</option>
+              <option value="piéton">🚶 Piéton</option>
+            </select>
+
+            <select
+              [(ngModel)]="newEntity.direction"
+              class="flex-1 bg-gray-700 border border-gray-600 rounded px-3 py-2 text-gray-200"
+            >
+              <option *ngFor="let d of directions" [value]="d">{{ d }}</option>
+            </select>
+
+            <button
+              (click)="addEntity()"
+              class="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white transition"
+            >
+              ➕ Ajouter
+            </button>
+          </div>
+
+          <!-- LISTE DES ENTITÉS -->
+          <div
+            *ngIf="entities.length > 0; else noEntity"
+            class="space-y-2 max-h-60 overflow-y-auto"
+          >
+            <div
+              *ngFor="let e of entities"
+              class="flex justify-between items-center border border-gray-600 p-3 rounded bg-gray-700 hover:bg-gray-600 transition"
+            >
+              <div class="flex items-center gap-3">
+                <span class="text-lg">
+                  {{ e.type === 'vehicule' ? '🚗' : '🚶' }}
+                </span>
+                <div>
+                  <div class="font-medium text-gray-100">{{ e.label }}</div>
+                  <div class="text-sm text-gray-400">Direction {{ e.direction }}</div>
+                </div>
+              </div>
+              <button
+                (click)="removeEntity(e.id)"
+                class="text-red-400 hover:text-red-300 transition"
+              >
+                ❌
+              </button>
+            </div>
+          </div>
+          <ng-template #noEntity>
+            <div class="text-gray-500 text-sm text-center py-4">Aucune entité ajoutée</div>
+          </ng-template>
+        </div>
+
+        <!-- MESSAGE D'ACTION -->
+        <div
+          *ngIf="lastActionMessage"
+          class="bg-indigo-900 border border-indigo-700 p-4 rounded-lg text-indigo-200 text-sm"
+        >
+          {{ lastActionMessage }}
+        </div>
+      </aside>
+    </div>
+  </div>
 </div>
