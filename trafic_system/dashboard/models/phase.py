@@ -52,17 +52,14 @@ class Phase:
 
         try:
 
-            # Récupération du programme complet du feu
             logics = traci.trafficlight.getCompleteRedYellowGreenDefinition(self._id)
             logic = logics[0]
 
-            # Vérifie si l'index est valide
             if index_phase >= len(logic.phases):
                 print(f"❌ Index {index_phase} invalide (max {len(logic.phases)-1})")
                 traci.close()
                 return
-
-            # Copie des phases et modification
+            
             phases = list(logic.phases)
             phase_modifiee = phases[index_phase]
             phases[index_phase] = traci.trafficlight.Phase(
@@ -72,12 +69,12 @@ class Phase:
                 maxDur=getattr(phase_modifiee, "maxDur", 0)
             )
 
-            # Création de la nouvelle logique avec la phase modifiée
+           
             new_logic = traci.trafficlight.Logic(
                 logic.programID, logic.type, logic.currentPhaseIndex, phases
             )
 
-            # Application et rechargement du programme
+            
             traci.trafficlight.setCompleteRedYellowGreenDefinition(self._id, new_logic)
             traci.trafficlight.setProgram(self._id, new_logic.programID)
 
@@ -208,29 +205,17 @@ class Phase:
         :param new_duration: nouvelle durée en secondes
         """
         try:
-            # Sérialisation des phases avec regroupement
             logic_dict = self.logics_serialized()[0]
-            grouped = logic_dict.get("grouped_by_state", {})
-
-            # Récupérer les phases à modifier
-            if '.' in group_name:
-                main_group, sub_group = group_name.split('.')
-                phases_to_modify = grouped.get(main_group, {}).get(sub_group, [])
-            else:
-                phases_to_modify = grouped.get(group_name, [])
+            phases_to_modify = self._get_phase_to_modify(logic_dict, group_name)
 
             if not phases_to_modify:
                 print(f"⚠️ Aucun phase trouvé pour le groupe '{group_name}'")
                 return False
 
-            # Récupération du programme complet
-            logics = traci.trafficlight.getCompleteRedYellowGreenDefinition(self.tl_id)
-            logic = logics[0]
+            logic = self.logics[0]
 
-            # Copie des phases
             phases = list(logic.phases)
 
-            # Modification des phases du groupe
             for phase_info in phases_to_modify:
                 idx = phase_info["index"]
                 old_phase = phases[idx]
@@ -240,8 +225,7 @@ class Phase:
                     minDur=new_duration,
                     maxDur=new_duration
                 )
-
-            # Création de la nouvelle logique avec les phases modifiées
+           
             new_logic = traci.trafficlight.Logic(
                 logic.programID,
                 logic.type,
@@ -249,7 +233,6 @@ class Phase:
                 phases
             )
 
-            # Application et rechargement du programme
             traci.trafficlight.setCompleteRedYellowGreenDefinition(self.tl_id, new_logic)
             traci.trafficlight.setProgram(self._id, new_logic.programID)
 
@@ -263,3 +246,12 @@ class Phase:
             print("Erreur :", e)
             return False
 
+def _get_phase_to_modify(self, logic_dict, group_name):
+    grouped = logic_dict.get("grouped_by_state", {})
+    if '.' in group_name:
+        main_group, sub_group = group_name.split('.')
+        phases_to_modify = grouped.get(main_group, {}).get(sub_group, [])
+    else:
+        phases_to_modify = grouped.get(group_name, [])
+
+    return phases_to_modify

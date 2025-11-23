@@ -1,3 +1,4 @@
+import datetime
 import json
 from django.shortcuts import render
 from django.http import JsonResponse
@@ -13,7 +14,11 @@ def index(request):
 
 def start_simulation(request):
     simulation.start_simulation()
-    return JsonResponse({"status": "started"})
+    return JsonResponse({"status": "started"})  
+
+def stop_simulation(request):
+    data = simulation.stop_simulation()
+    return JsonResponse(data)
 
 def carrefour_data(request):
     data = simulation.get_carrefour_data()
@@ -66,3 +71,26 @@ def create_vehicle(request, vehicleID, routeID):
     result = simulation.create_vehicle(vehicleID, routeID)
 
     return JsonResponse(result)
+
+def get_all_statistics(request):
+    result = simulation.get_all_statistics()
+
+    return JsonResponse(result)
+
+def delete_statistic(request, id):
+    result = simulation.delete_statistic(id)
+
+    return JsonResponse(result)
+
+def get_statistics_by_date(request):
+    start_date = request.GET.get('start_date')  # exemple: ?start_date=2025-11-23
+    end_date = request.GET.get('end_date')
+
+    # Convertir en datetime si fourni
+    if start_date:
+        start_date = datetime.fromisoformat(start_date)
+    if end_date:
+        end_date = datetime.fromisoformat(end_date)
+
+    stats = simulation.get_statistics_by_date(start_date=start_date, end_date=end_date)
+    return JsonResponse(stats, safe=True)

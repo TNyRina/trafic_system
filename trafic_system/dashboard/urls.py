@@ -9,6 +9,18 @@ urlpatterns = [
     path('start/', 
         views.start_simulation, name='start_simulation'),
 
+    path('stop/', 
+        views.stop_simulation, name='stop_simulation'),
+
+    path('statistics/', 
+        views.get_all_statistics, name='get_all_statistics'),
+
+    path('statistic/delete/<int:id>/', 
+        views.delete_statistic, name='delete_statistic'),
+
+    path('statistic/filter/date/', views.get_statistics_by_date, name='get_statistics_by_date'),
+
+
     path('data/', 
         views.carrefour_data, name='carrefour_data'),
 
