@@ -35,5 +35,9 @@ Ouvrir le lien http://127.0.0.1:8000/dashboard/
 |'/stop' | Stop la simulation et sauvegrade le statistique 
 |'/statistics' | Liste les statistics
 |'statistic/delete/<int: id_stat>' | suprime un stastique
+|'/statistic/filter/date/?start_date=2025-11-20&end_date=2025-11-23'    |
+|'/statistic/filter/date/?start_date=2025-11-20'                        | filtre static par date    
+|'/statistic/filter/date/''                                             |    
+
 
 **Important** : actualiser la page pour voir le changement des donnees dynamiques

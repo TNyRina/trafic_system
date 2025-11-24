@@ -1,7 +1,7 @@
-import datetime
-import json
+
 from django.shortcuts import render
 from django.http import JsonResponse
+from datetime import datetime
 from .models import Simulation
 from django.conf import settings
 
