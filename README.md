@@ -32,4 +32,12 @@ Ouvrir le lien http://127.0.0.1:8000/dashboard/
 |'traffic_light/change_phase/yellow/<int:duration>/'   | changer la duration de la phase jaune
 |'traffic_light/change_phase/green_main/<int:duration>/' | changer la duration de la phase verte longue (passage pieton non bloquer)
 |'traffic_light/change_phase/green_short/<int:duration>/' | changer la duration de la phase verte courte (passage pieton bloquer)
+|'/stop' | Stop la simulation et sauvegrade le statistique 
+|'/statistics' | Liste les statistics
+|'statistic/delete/<int: id_stat>' | suprime un stastique
+|'/statistic/filter/date/?start_date=2025-11-20&end_date=2025-11-23'    |
+|'/statistic/filter/date/?start_date=2025-11-20'                        | filtre static par date    
+|'/statistic/filter/date/''                                             |    
+
+
 **Important** : actualiser la page pour voir le changement des donnees dynamiques
