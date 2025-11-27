@@ -1,0 +1,433 @@
+<div class="p-6 bg-gray-900 min-h-screen text-gray-100">
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-bold text-indigo-400">🚦 Historique des simulations</h1>
+    <button
+      routerLink="/"
+      class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition"
+    >
+      ← Retour à l'accueil
+    </button>
+  </div>
+
+  <!-- INDICATEUR DE CHARGEMENT -->
+  <div *ngIf="isLoading" class="text-center py-12">
+    <div
+      class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-400"
+    ></div>
+    <p class="mt-4 text-gray-400">Chargement des simulations...</p>
+  </div>
+
+  <!-- MESSAGE D'ERREUR -->
+  <div
+    *ngIf="error && !isLoading"
+    class="bg-red-900 border border-red-700 p-4 rounded-lg text-red-200 mb-6"
+  >
+    <div class="flex items-center gap-3">
+      <span>❌</span>
+      <div>
+        <p class="font-medium">{{ error }}</p>
+        <button
+          (click)="loadSimulations()"
+          class="mt-2 px-3 py-1 bg-red-700 hover:bg-red-600 rounded text-sm"
+        >
+          Réessayer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MESSAGE DE SUCCÈS -->
+  <div
+    *ngIf="successMessage"
+    class="mb-6 p-4 rounded-lg bg-green-900 border border-green-700 text-green-200 flex items-start gap-3"
+  >
+    <div class="flex-shrink-0 text-lg">✅</div>
+    <div class="flex-1">{{ successMessage }}</div>
+    <button
+      (click)="clearSuccessMessage()"
+      class="flex-shrink-0 text-green-300 hover:text-white transition text-lg"
+      title="Fermer"
+    >
+      ✕
+    </button>
+  </div>
+
+  <!-- FILTRAGE PAR DATE -->
+  <div class="bg-gray-800 rounded-xl shadow border border-gray-700 p-6 mb-6">
+    <h3 class="font-semibold text-indigo-300 mb-4 flex items-center gap-2">
+      <span>📅</span> Filtrage par date
+    </h3>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+      <!-- Date de début -->
+      <div>
+        <label class="block text-sm text-gray-400 mb-2">Date de début</label>
+        <input
+          type="date"
+          [(ngModel)]="startDate"
+          class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-white"
+        />
+      </div>
+
+      <!-- Date de fin -->
+      <div>
+        <label class="block text-sm text-gray-400 mb-2">Date de fin</label>
+        <input
+          type="date"
+          [(ngModel)]="endDate"
+          class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-white"
+        />
+      </div>
+
+      <!-- Boutons -->
+      <div class="flex gap-2">
+        <button
+          (click)="applyDateFilter()"
+          [disabled]="isLoading"
+          class="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition disabled:opacity-50"
+        >
+          🔍 Filtrer
+        </button>
+
+        <button
+          *ngIf="isFiltering"
+          (click)="resetFilter()"
+          class="px-4 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded-lg transition"
+        >
+          🔄 Tout
+        </button>
+      </div>
+    </div>
+
+    <!-- Indicateur de filtre actif -->
+    <div *ngIf="isFiltering" class="mt-4 p-3 bg-blue-900 border border-blue-700 rounded-lg">
+      <p class="text-blue-200 text-sm flex items-center gap-2">
+        <span>🎯</span>
+        Filtre actif
+        <span *ngIf="startDate">du {{ startDate | date : 'dd/MM/yyyy' }}</span>
+        <span *ngIf="endDate">au {{ endDate | date : 'dd/MM/yyyy' }}</span>
+      </p>
+    </div>
+  </div>
+
+  <!-- CARTES DES SIMULATIONS -->
+  <div *ngIf="!isLoading && !error" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+    <div
+      *ngFor="let sim of simulations"
+      class="bg-gray-800 rounded-xl shadow-lg border border-gray-700 p-5 hover:shadow-xl hover:border-gray-600 transition-all duration-300"
+    >
+      <div class="flex justify-between mb-3">
+        <h2 class="font-semibold text-white">Simulation #{{ sim.simulation_id }}</h2>
+        <span class="text-sm text-gray-400">
+          {{ sim.date_debut | date : 'dd/MM/yy HH:mm' }}
+        </span>
+      </div>
+
+      <p class="text-gray-300 mb-4">{{ sim.nom }}</p>
+
+      <div class="grid grid-cols-2 gap-3 text-sm mb-4">
+        <div class="flex items-center gap-2 text-green-400">
+          <span>🚗</span>
+          <span>{{ sim.nb_vehicules_total }} véhicules</span>
+        </div>
+        <div class="flex items-center gap-2 text-blue-400">
+          <span>🚶</span>
+          <span>{{ sim.nb_pietons_total }} piétons</span>
+        </div>
+        <div class="flex items-center gap-2 text-yellow-400">
+          <span>⏱</span>
+          <span>{{ sim.duree_simulation }}s</span>
+        </div>
+        <div class="flex items-center gap-2 text-purple-400">
+          <span>⚡</span>
+          <span>{{ sim.mean_speed_global | number : '1.1-1' }} m/s</span>
+        </div>
+      </div>
+
+      <!-- BOUTONS ACTION -->
+      <div class="flex gap-2">
+        <button
+          (click)="selectSimulation(sim)"
+          class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg font-medium transition-colors duration-200"
+        >
+          Voir détails
+        </button>
+
+        <!-- ICONE SUPPRIMER AJOUTÉE -->
+        <button
+          (click)="confirmDelete(sim)"
+          class="px-3 bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg transition-colors duration-200"
+          title="Supprimer cette simulation"
+        >
+          🗑️
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MESSAGE SI AUCUNE SIMULATION -->
+  <div
+    *ngIf="simulations.length === 0 && !isLoading && !error"
+    class="text-center py-12 text-gray-400"
+  >
+    <div class="text-6xl mb-4">📊</div>
+    <p class="text-lg">
+      {{
+        isFiltering
+          ? 'Aucune simulation trouvée avec ces critères'
+          : 'Aucune simulation enregistrée'
+      }}
+    </p>
+    <p class="text-sm mt-2">
+      {{
+        isFiltering
+          ? "Essayez avec d'autres dates"
+          : 'Les simulations apparaîtront ici après exécution'
+      }}
+    </p>
+
+    <button
+      *ngIf="isFiltering"
+      (click)="resetFilter()"
+      class="mt-4 px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition"
+    >
+      Afficher toutes les simulations
+    </button>
+  </div>
+
+  <!-- MODAL/POPUP POUR LES DÉTAILS -->
+  <div
+    *ngIf="selectedSimulation"
+    class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50"
+    (click)="closeDetails()"
+  >
+    <div
+      class="bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+      (click)="$event.stopPropagation()"
+    >
+      <!-- EN-TÊTE DU MODAL -->
+      <div class="sticky top-0 bg-gray-800 border-b border-gray-700 p-6 rounded-t-2xl">
+        <div class="flex justify-between items-center">
+          <h2 class="text-2xl font-bold text-white">
+            Détails de la Simulation #{{ selectedSimulation.simulation_id }}
+          </h2>
+          <button
+            (click)="closeDetails()"
+            class="text-gray-400 hover:text-white transition text-2xl p-2 hover:bg-gray-700 rounded-lg"
+            title="Fermer"
+          >
+            ✕
+          </button>
+        </div>
+        <p class="text-gray-300 mt-2">{{ selectedSimulation.nom }}</p>
+      </div>
+
+      <!-- CONTENU DU MODAL -->
+      <div class="p-6 space-y-6">
+        <!-- STATISTIQUES GLOBALES -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="bg-gray-700 rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-green-400">
+              {{ selectedSimulation.nb_vehicules_total }}
+            </div>
+            <div class="text-sm text-gray-400">Véhicules total</div>
+          </div>
+          <div class="bg-gray-700 rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-blue-400">
+              {{ selectedSimulation.nb_pietons_total }}
+            </div>
+            <div class="text-sm text-gray-400">Piétons total</div>
+          </div>
+          <div class="bg-gray-700 rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-yellow-400">
+              {{ selectedSimulation.duree_simulation }}s
+            </div>
+            <div class="text-sm text-gray-400">Durée</div>
+          </div>
+          <div class="bg-gray-700 rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-purple-400">
+              {{ selectedSimulation.mean_speed_global | number : '1.1-1' }}
+            </div>
+            <div class="text-sm text-gray-400">Vitesse moy. (m/s)</div>
+          </div>
+        </div>
+
+        <!-- INFORMATIONS DATE -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div class="bg-gray-700 rounded-lg p-4">
+            <div class="text-gray-400">Date de début</div>
+            <div class="text-white">
+              {{ selectedSimulation.date_debut | date : 'dd/MM/yyyy à HH:mm:ss' }}
+            </div>
+          </div>
+          <div class="bg-gray-700 rounded-lg p-4">
+            <div class="text-gray-400">Date de fin</div>
+            <div class="text-white">
+              {{ selectedSimulation.date_fin | date : 'dd/MM/yyyy à HH:mm:ss' }}
+            </div>
+          </div>
+        </div>
+
+        <!-- STATISTIQUES PAR VOIE -->
+        <div>
+          <h3 class="text-lg font-semibold text-gray-300 mb-4 flex items-center gap-2">
+            <span>📊</span> Statistiques par voie
+          </h3>
+          <div
+            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto p-2"
+          >
+            <div
+              *ngFor="let lane of getLanesArray(selectedSimulation.lanes_stats)"
+              class="bg-gray-700 rounded-lg p-4 border border-gray-600 hover:border-gray-500 transition-colors"
+            >
+              <div class="flex justify-between items-start mb-2">
+                <div>
+                  <div class="font-medium text-white text-sm flex items-center gap-2">
+                    <span class="text-lg">{{ getLaneEmoji(lane.id) }}</span>
+                    {{ getLaneLabel(lane.id) }}
+                  </div>
+                  <div class="text-xs text-gray-400 mt-1">{{ lane.id }}</div>
+                </div>
+                <span
+                  class="px-2 py-1 text-xs rounded-full"
+                  [ngClass]="{
+                    'bg-green-900 text-green-200': lane.num_vehicles > 0,
+                    'bg-gray-600 text-gray-300': lane.num_vehicles === 0
+                  }"
+                >
+                  {{ lane.num_vehicles }} véh.
+                </span>
+              </div>
+
+              <div class="space-y-2 text-xs">
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Vitesse:</span>
+                  <span class="text-yellow-400">{{ lane.mean_speed | number : '1.1-1' }} m/s</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Occupation:</span>
+                  <span class="text-blue-400">{{ lane.occupancy * 100 | number : '1.1-1' }}%</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Temps attente:</span>
+                  <span class="text-red-400">{{ lane.waiting_time | number : '1.1-1' }}s</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Longueur:</span>
+                  <span class="text-gray-300">{{ lane.length }}m</span>
+                </div>
+              </div>
+
+              <!-- Véhicules sur cette voie -->
+              <div *ngIf="lane.vehicle_ids.length > 0" class="mt-3 pt-3 border-t border-gray-600">
+                <div class="text-xs text-gray-400 mb-1">Véhicules présents:</div>
+                <div class="flex flex-wrap gap-1">
+                  <span
+                    *ngFor="let vehicleId of lane.vehicle_ids"
+                    class="px-2 py-1 bg-gray-600 rounded text-xs text-gray-300 hover:bg-gray-500 transition-colors"
+                    [title]="vehicleId"
+                  >
+                    {{ getShortVehicleId(vehicleId) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RÉSUMÉ PAR DIRECTION -->
+        <div>
+          <h3 class="text-lg font-semibold text-gray-300 mb-4 flex items-center gap-2">
+            <span>🧭</span> Résumé par direction
+          </h3>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div
+              *ngFor="let direction of ['NORD', 'SUD', 'EST', 'OUEST']"
+              class="bg-gray-700 rounded-lg p-4"
+            >
+              <h4 class="font-medium text-white mb-3 text-center">{{ direction }}</h4>
+              <div class="space-y-2 text-sm">
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Voies actives:</span>
+                  <span class="text-green-400">
+                    {{ getActiveLanesForDirection(selectedSimulation.lanes_stats, direction) }}/3
+                  </span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Véhicules:</span>
+                  <span class="text-blue-400">
+                    {{ getVehicleCountForDirection(selectedSimulation.lanes_stats, direction) }}
+                  </span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Attente moy.:</span>
+                  <span class="text-red-400">
+                    {{
+                      getAvgWaitingTimeForDirection(selectedSimulation.lanes_stats, direction)
+                        | number : '1.1-1'
+                    }}s
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PIED DU MODAL -->
+      <div class="sticky bottom-0 bg-gray-800 border-t border-gray-700 p-4 rounded-b-2xl">
+        <div class="flex justify-end">
+          <button
+            (click)="closeDetails()"
+            class="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
+          >
+            Fermer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- MODAL DE CONFIRMATION DE SUPPRESSION -->
+  <div
+    *ngIf="simulationToDelete"
+    class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50"
+    (click)="cancelDelete()"
+  >
+    <div
+      class="bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 max-w-md w-full"
+      (click)="$event.stopPropagation()"
+    >
+      <!-- EN-TÊTE -->
+      <div class="p-6 border-b border-gray-700">
+        <h2 class="text-xl font-bold text-white flex items-center gap-3">
+          <span class="text-red-500 text-2xl">⚠️</span>
+          Confirmer la suppression
+        </h2>
+      </div>
+
+      <!-- CONTENU -->
+      <div class="p-6">
+        <p class="text-gray-300 mb-2">Êtes-vous sûr de vouloir supprimer la simulation :</p>
+        <p class="text-white font-semibold mb-1">#{{ simulationToDelete.sim.simulation_id }}</p>
+        <p class="text-gray-400 text-sm mb-4">{{ simulationToDelete.sim.nom }}</p>
+        <p class="text-red-400 text-sm">Cette action est irréversible.</p>
+      </div>
+
+      <!-- ACTIONS -->
+      <div class="flex gap-3 p-6 border-t border-gray-700">
+        <button
+          (click)="cancelDelete()"
+          class="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
+        >
+          Annuler
+        </button>
+        <button
+          (click)="deleteSimulation()"
+          class="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors font-medium"
+        >
+          🗑️ Supprimer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
