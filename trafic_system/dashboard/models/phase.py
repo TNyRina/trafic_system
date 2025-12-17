@@ -52,14 +52,14 @@ class Phase:
 
         try:
 
-            logics = traci.trafficlight.getCompleteRedYellowGreenDefinition(self._id)
+            logics = traci.trafficlight.getCompleteRedYellowGreenDefinition(self.tl_id)
             logic = logics[0]
 
             if index_phase >= len(logic.phases):
                 print(f"❌ Index {index_phase} invalide (max {len(logic.phases)-1})")
                 traci.close()
                 return
-            
+            print(f"Change phase duration {index_phase} , duration : {new_duration}")
             phases = list(logic.phases)
             phase_modifiee = phases[index_phase]
             phases[index_phase] = traci.trafficlight.Phase(
@@ -75,8 +75,8 @@ class Phase:
             )
 
             
-            traci.trafficlight.setCompleteRedYellowGreenDefinition(self._id, new_logic)
-            traci.trafficlight.setProgram(self._id, new_logic.programID)
+            traci.trafficlight.setCompleteRedYellowGreenDefinition(self.tl_id, new_logic)
+            traci.trafficlight.setProgram(self.tl_id, new_logic.programID)
 
         except traci.exceptions.TraCIException as e:
             print("Erreur TraCI :", e)
@@ -212,7 +212,9 @@ class Phase:
                 print(f"⚠️ Aucun phase trouvé pour le groupe '{group_name}'")
                 return False
 
-            logic = self.logics[0]
+            # logic = self.logics[0]
+            logics = traci.trafficlight.getCompleteRedYellowGreenDefinition(self.tl_id)
+            logic = logics[0]
 
             phases = list(logic.phases)
 
@@ -234,7 +236,7 @@ class Phase:
             )
 
             traci.trafficlight.setCompleteRedYellowGreenDefinition(self.tl_id, new_logic)
-            traci.trafficlight.setProgram(self._id, new_logic.programID)
+            traci.trafficlight.setProgram(self.tl_id, new_logic.programID)
 
             print(f"✅ Durée des phases du groupe '{group_name}' modifiée à {new_duration}s")
             return True
@@ -246,12 +248,12 @@ class Phase:
             print("Erreur :", e)
             return False
 
-def _get_phase_to_modify(self, logic_dict, group_name):
-    grouped = logic_dict.get("grouped_by_state", {})
-    if '.' in group_name:
-        main_group, sub_group = group_name.split('.')
-        phases_to_modify = grouped.get(main_group, {}).get(sub_group, [])
-    else:
-        phases_to_modify = grouped.get(group_name, [])
+    def _get_phase_to_modify(self, logic_dict, group_name):
+        grouped = logic_dict.get("grouped_by_state", {})
+        if '.' in group_name:
+            main_group, sub_group = group_name.split('.')
+            phases_to_modify = grouped.get(main_group, {}).get(sub_group, [])
+        else:
+            phases_to_modify = grouped.get(group_name, [])
 
-    return phases_to_modify
+        return phases_to_modify

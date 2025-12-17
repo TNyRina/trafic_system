@@ -210,7 +210,7 @@ class Simulation:
 
 
     def change_phase_duration(self, index, duration):
-        self.carrefour.TL.set_phase_duration(index, duration)
+        self.carrefour.TL.phase.set_phase_duration(index, duration)
 
         return self.get_carrefour_data()
 
